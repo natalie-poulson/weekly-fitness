@@ -1,3 +1,5 @@
+https://natalie-poulson.github.io/weekly-fitness/
+
 # Heart Health Plan
 
 A small, dependency-free web app that turns a weekly heart-health routine into a phone-friendly daily checklist, with a built-in interval timer for stationary-bike rides.
