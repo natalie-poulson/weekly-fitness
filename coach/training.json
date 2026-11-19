@@ -1,0 +1,342 @@
+{
+  "schema": 1,
+  "current": {
+    "status": "HOLD",
+    "stepGoal": 7500,
+    "headline": "Starting plan. First check-in is Sunday, Nov 22.",
+    "minutes": {
+      "mon": 30,
+      "tue": 45,
+      "wed": 20,
+      "thu": 35,
+      "fri": 25
+    },
+    "resistance": {
+      "mon": 0,
+      "tue": 0,
+      "wed": 0,
+      "thu": 0,
+      "fri": 0
+    },
+    "levels": {
+      "mon": 1,
+      "thu": 1
+    },
+    "weeksSinceDeload": 0,
+    "lastDeloadWeekOf": null,
+    "lastPlanWeekOf": "2026-11-16",
+    "dumbbells": {},
+    "adjustments": []
+  },
+  "rideTypes": {
+    "hiit": {
+      "name": "HIIT Engine",
+      "min": 30,
+      "max": 35,
+      "workSegment": "Max Effort",
+      "progresses": true,
+      "levels": [
+        {
+          "level": 1,
+          "rounds": 4,
+          "workMin": 3,
+          "easyMin": 3,
+          "minutes": 30
+        },
+        {
+          "level": 2,
+          "rounds": 4,
+          "workMin": 3,
+          "easyMin": 2,
+          "minutes": 30
+        },
+        {
+          "level": 3,
+          "rounds": 5,
+          "workMin": 3,
+          "easyMin": 2,
+          "minutes": 35
+        },
+        {
+          "level": 4,
+          "rounds": 4,
+          "workMin": 4,
+          "easyMin": 2,
+          "minutes": 35
+        }
+      ]
+    },
+    "cruise": {
+      "name": "Zone 2 Cruise",
+      "min": 45,
+      "max": 60,
+      "workSegment": "Cruise",
+      "progresses": true
+    },
+    "warm": {
+      "name": "Pre-Pilates Warm-up",
+      "min": 20,
+      "max": 30,
+      "workSegment": "Build",
+      "progresses": false
+    },
+    "tempo": {
+      "name": "Tempo Burn",
+      "min": 35,
+      "max": 45,
+      "workSegment": "Tempo",
+      "progresses": true,
+      "levels": [
+        {
+          "level": 1,
+          "blocks": "1 x 15 min",
+          "tempoMin": 15,
+          "minutes": 35
+        },
+        {
+          "level": 2,
+          "blocks": "2 x 10 min, 3 min easy between",
+          "tempoMin": 20,
+          "minutes": 35
+        },
+        {
+          "level": 3,
+          "blocks": "2 x 12 min, 3 min easy between",
+          "tempoMin": 24,
+          "minutes": 40
+        },
+        {
+          "level": 4,
+          "blocks": "3 x 10 min, 3 min easy between",
+          "tempoMin": 30,
+          "minutes": 45
+        },
+        {
+          "level": 5,
+          "blocks": "2 x 15 min, 3 min easy between",
+          "tempoMin": 30,
+          "minutes": 45
+        }
+      ]
+    },
+    "base": {
+      "name": "Steady Base Spin",
+      "min": 20,
+      "max": 30,
+      "workSegment": "Steady Base",
+      "progresses": false
+    }
+  },
+  "limits": {
+    "resistanceOffset": [
+      -3,
+      4
+    ],
+    "stepGoalChange": 500,
+    "stepGoalMax": 10000
+  },
+  "progression": {
+    "_help": "One change per week. Each day works through its ladder in order; when one lever is maxed, move to the next.",
+    "maxChangesPerWeek": 1,
+    "minutesStep": 5,
+    "resistanceStep": 1,
+    "levelUpResistanceDrop": 2,
+    "ladders": {
+      "mon": [
+        "resistance",
+        "level"
+      ],
+      "tue": [
+        "minutes",
+        "resistance"
+      ],
+      "thu": [
+        "level",
+        "resistance"
+      ],
+      "wed": [],
+      "fri": []
+    },
+    "tueResistanceOnlyIfZone2": true
+  },
+  "strength": {
+    "days": [
+      "tue",
+      "thu"
+    ],
+    "equipment": "Core Home Fitness adjustable dumbbells (pair), 5-50 lb",
+    "availableLb": [
+      5,
+      10,
+      15,
+      20,
+      25,
+      30,
+      35,
+      40,
+      45,
+      50
+    ],
+    "incrementLb": 5,
+    "sets": 3,
+    "repRange": [
+      8,
+      15
+    ],
+    "progressWhen": "all sets reach 15 reps with 1-2 reps left, 2 sessions in a row",
+    "afterIncrease": "go up one 5 lb step and restart at 8 reps",
+    "stallSessions": 3,
+    "stallAction": "drop one 5 lb step and build the reps back up",
+    "_note": "5 lb jumps are big on light lifts (10 to 15 lb is +50%), so reps climb to 15 before the weight goes up."
+  },
+  "deload": {
+    "days": [
+      "tue",
+      "thu"
+    ],
+    "title": "Deload Easy Spin",
+    "text": "Deload week: optional 20 min easy spin (Zone 1, conversational, low resistance). No finisher. Skip it if you feel run down.",
+    "everyWeeks": [
+      4,
+      6
+    ],
+    "otherDaysResistanceOffset": -2,
+    "hiitLevel": 1,
+    "tempoLevel": 1
+  },
+  "nutrition": {
+    "activityFactors": {
+      "sedentary": 1.2,
+      "desk job + light activity": 1.375,
+      "moderately active": 1.55,
+      "very active": 1.725
+    },
+    "goals": [
+      "lose",
+      "maintain"
+    ],
+    "weeklyLossPctTarget": 0.5,
+    "proteinGPerLbGoalWeight": 0.7,
+    "minKcal": {
+      "female": 1200,
+      "male": 1500
+    },
+    "checkTolerancePct": 10,
+    "fiberMinG": 25,
+    "fiberGPer1000Kcal": 14,
+    "satFatMaxPctKcal": 10,
+    "sodiumMaxMg": 2300
+  },
+  "days": [
+    {
+      "key": "mon",
+      "name": "Monday",
+      "zone": "Zone 5",
+      "zc": "z5",
+      "focus": "VO2 Max",
+      "title": "The HIIT Engine",
+      "short": "HIIT bike",
+      "text": "30 min stationary bike. Warm up, then 4 rounds of 3 min max effort + 3 min easy spin.",
+      "ride": {
+        "type": "hiit"
+      }
+    },
+    {
+      "key": "tue",
+      "name": "Tuesday",
+      "zone": "Zone 2",
+      "zc": "z2",
+      "focus": "Endurance",
+      "title": "Swim or Bike Cruise",
+      "short": "Swim / cruise",
+      "text": "45–60 min home bike cruise (conversational pace)",
+      "ride": {
+        "type": "cruise"
+      },
+      "swap": {
+        "default": "bike",
+        "swim": {
+          "text": "45 min steady swim",
+          "pools": true
+        }
+      },
+      "finisher": "tue"
+    },
+    {
+      "key": "wed",
+      "name": "Wednesday",
+      "zone": "Zone 1-2",
+      "zc": "z1",
+      "focus": "Double Day",
+      "title": "Bike + Reformer Pilates",
+      "short": "Bike + Pilates",
+      "text": "20–30 min easy bike warm-up at home, immediately followed by Reformer Pilates.",
+      "ride": {
+        "type": "warm"
+      },
+      "pilates": {
+        "name": "Reformer Pilates"
+      }
+    },
+    {
+      "key": "thu",
+      "name": "Thursday",
+      "zone": "Zone 2-4",
+      "zc": "z34",
+      "focus": "Endurance",
+      "title": "Swim or Tempo Burn",
+      "short": "Swim / tempo",
+      "text": "35–45 min bike tempo burn (comfortably hard)",
+      "ride": {
+        "type": "tempo"
+      },
+      "swap": {
+        "default": "bike",
+        "swim": {
+          "text": "45 min steady swim",
+          "pools": true
+        }
+      },
+      "finisher": "thu"
+    },
+    {
+      "key": "fri",
+      "name": "Friday",
+      "zone": "Zone 2",
+      "zc": "z2",
+      "focus": "Double Day",
+      "title": "Bike + Reformer Pilates",
+      "short": "Bike + Pilates",
+      "text": "20–30 min steady bike base spin at home, immediately followed by Reformer Pilates.",
+      "ride": {
+        "type": "base"
+      },
+      "pilates": {
+        "name": "Reformer Pilates"
+      }
+    },
+    {
+      "key": "sat",
+      "name": "Saturday",
+      "zone": "Rest",
+      "zc": "rest",
+      "focus": "Recovery",
+      "title": "Full Reset",
+      "short": "Rest",
+      "text": "No structured workouts. Let HRV rebound, allow muscle repair, and lower baseline heart tension.",
+      "rest": true
+    },
+    {
+      "key": "sun",
+      "name": "Sunday",
+      "zone": "Rest",
+      "zc": "rest",
+      "focus": "Recovery",
+      "title": "Full Reset",
+      "short": "Rest",
+      "text": "No structured workouts. Let HRV rebound, allow muscle repair, and lower baseline heart tension.",
+      "rest": true,
+      "checkin": true
+    }
+  ]
+}

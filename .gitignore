@@ -1,0 +1,16 @@
+# ---- Private coach data: never publish ----
+coach/profile.json
+coach/history.json
+*.local.json
+*.local.*
+
+# ---- macOS / editors / tooling ----
+.DS_Store
+node_modules/
+*.log
+.vscode/
+.idea/
+
+# Published on purpose (do NOT add these here):
+#   history.enc (encrypted), coach/history.example.json (fake data),
+#   CLAUDE.md, .claude/commands/, coach/*.mjs, coach/*.md, coach/training.json
