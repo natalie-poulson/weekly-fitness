@@ -1,38 +1,139 @@
 {
   "schema": 1,
-  "weekOf": "2026-11-16",
-  "generatedAt": "2026-11-17T12:00:00.000Z",
+  "weekOf": "2026-11-23",
+  "generatedAt": "2026-11-22T17:39:24.347Z",
   "calibration": {
     "status": "HOLD",
-    "headline": "Starting plan. First check-in is Sunday, Nov 22.",
+    "headline": "Holding steady: finish the full week, including Wednesday.",
     "stepGoal": 7500,
-    "adjustments": []
+    "adjustments": [
+      {
+        "day": "thu",
+        "text": "Thanksgiving: do the tempo ride in the morning"
+      },
+      {
+        "day": "thu",
+        "text": "Split squat: keep 10 lb, cut reps if it hurts"
+      }
+    ]
   },
   "days": [
-    { "key": "mon", "name": "Monday", "zone": "Zone 5", "zc": "z5", "focus": "VO2 Max", "title": "The HIIT Engine", "short": "HIIT bike",
+    {
+      "key": "mon",
+      "name": "Monday",
+      "zone": "Zone 5",
+      "zc": "z5",
+      "focus": "VO2 Max",
+      "title": "The HIIT Engine",
+      "short": "HIIT bike",
       "text": "30 min stationary bike, level 1. Warm up, then 4 rounds of 3 min max effort + 3 min easy spin.",
-      "ride": { "type": "hiit", "minutes": 30, "level": 1 } },
-    { "key": "tue", "name": "Tuesday", "zone": "Zone 2", "zc": "z2", "focus": "Endurance", "title": "Swim or Bike Cruise", "short": "Swim / cruise",
+      "ride": {
+        "type": "hiit",
+        "minutes": 30,
+        "level": 1
+      }
+    },
+    {
+      "key": "tue",
+      "name": "Tuesday",
+      "zone": "Zone 2",
+      "zc": "z2",
+      "focus": "Endurance",
+      "title": "Swim or Bike Cruise",
+      "short": "Swim / cruise",
       "text": "45–60 min home bike cruise (conversational pace)",
-      "ride": { "type": "cruise", "minutes": 45 },
-      "swap": { "default": "bike", "swim": { "text": "45 min steady swim", "pools": true } },
-      "finisher": "tue" },
-    { "key": "wed", "name": "Wednesday", "zone": "Zone 1-2", "zc": "z1", "focus": "Double Day", "title": "Bike + Reformer Pilates", "short": "Bike + Pilates",
+      "ride": {
+        "type": "cruise",
+        "minutes": 45
+      },
+      "swap": {
+        "default": "bike",
+        "swim": {
+          "text": "45 min steady swim",
+          "pools": true
+        }
+      },
+      "finisher": "tue"
+    },
+    {
+      "key": "wed",
+      "name": "Wednesday",
+      "zone": "Zone 1-2",
+      "zc": "z1",
+      "focus": "Double Day",
+      "title": "Bike + Reformer Pilates",
+      "short": "Bike + Pilates",
       "text": "20–30 min easy bike warm-up at home, immediately followed by Reformer Pilates.",
-      "ride": { "type": "warm", "minutes": 20 },
-      "pilates": { "name": "Reformer Pilates" } },
-    { "key": "thu", "name": "Thursday", "zone": "Zone 2-4", "zc": "z34", "focus": "Endurance", "title": "Swim or Tempo Burn", "short": "Swim / tempo",
+      "ride": {
+        "type": "warm",
+        "minutes": 20
+      },
+      "pilates": {
+        "name": "Reformer Pilates"
+      }
+    },
+    {
+      "key": "thu",
+      "name": "Thursday",
+      "zone": "Zone 2-4",
+      "zc": "z34",
+      "focus": "Endurance",
+      "title": "Swim or Tempo Burn",
+      "short": "Swim / tempo",
       "text": "35 min bike tempo burn (comfortably hard), level 1: 1 x 15 min at tempo.",
-      "ride": { "type": "tempo", "minutes": 35, "level": 1 },
-      "swap": { "default": "bike", "swim": { "text": "45 min steady swim", "pools": true } },
-      "finisher": "thu" },
-    { "key": "fri", "name": "Friday", "zone": "Zone 2", "zc": "z2", "focus": "Double Day", "title": "Bike + Reformer Pilates", "short": "Bike + Pilates",
+      "ride": {
+        "type": "tempo",
+        "minutes": 35,
+        "level": 1
+      },
+      "swap": {
+        "default": "bike",
+        "swim": {
+          "text": "45 min steady swim",
+          "pools": true
+        }
+      },
+      "finisher": "thu"
+    },
+    {
+      "key": "fri",
+      "name": "Friday",
+      "zone": "Zone 2",
+      "zc": "z2",
+      "focus": "Double Day",
+      "title": "Bike + Reformer Pilates",
+      "short": "Bike + Pilates",
       "text": "20–30 min steady bike base spin at home, immediately followed by Reformer Pilates.",
-      "ride": { "type": "base", "minutes": 25 },
-      "pilates": { "name": "Reformer Pilates" } },
-    { "key": "sat", "name": "Saturday", "zone": "Rest", "zc": "rest", "focus": "Recovery", "title": "Full Reset", "short": "Rest",
-      "text": "No structured workouts. Let HRV rebound, allow muscle repair, and lower baseline heart tension.", "rest": true },
-    { "key": "sun", "name": "Sunday", "zone": "Rest", "zc": "rest", "focus": "Recovery", "title": "Full Reset", "short": "Rest",
-      "text": "No structured workouts. Let HRV rebound, allow muscle repair, and lower baseline heart tension.", "rest": true, "checkin": true }
+      "ride": {
+        "type": "base",
+        "minutes": 25
+      },
+      "pilates": {
+        "name": "Reformer Pilates"
+      }
+    },
+    {
+      "key": "sat",
+      "name": "Saturday",
+      "zone": "Rest",
+      "zc": "rest",
+      "focus": "Recovery",
+      "title": "Full Reset",
+      "short": "Rest",
+      "text": "No structured workouts. Let HRV rebound, allow muscle repair, and lower baseline heart tension.",
+      "rest": true
+    },
+    {
+      "key": "sun",
+      "name": "Sunday",
+      "zone": "Rest",
+      "zc": "rest",
+      "focus": "Recovery",
+      "title": "Full Reset",
+      "short": "Rest",
+      "text": "No structured workouts. Let HRV rebound, allow muscle repair, and lower baseline heart tension.",
+      "rest": true,
+      "checkin": true
+    }
   ]
 }

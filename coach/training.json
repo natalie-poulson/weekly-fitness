@@ -3,7 +3,7 @@
   "current": {
     "status": "HOLD",
     "stepGoal": 7500,
-    "headline": "Starting plan. First check-in is Sunday, Nov 22.",
+    "headline": "Holding steady: finish the full week, including Wednesday.",
     "minutes": {
       "mon": 30,
       "tue": 45,
@@ -22,11 +22,41 @@
       "mon": 1,
       "thu": 1
     },
-    "weeksSinceDeload": 0,
+    "weeksSinceDeload": 1,
     "lastDeloadWeekOf": null,
-    "lastPlanWeekOf": "2026-11-16",
-    "dumbbells": {},
-    "adjustments": []
+    "lastPlanWeekOf": "2026-11-23",
+    "dumbbells": {
+      "rdl": {
+        "lb": 20,
+        "topStreak": 0,
+        "stalls": 0
+      },
+      "ohp": {
+        "lb": 10,
+        "topStreak": 0,
+        "stalls": 0
+      },
+      "ssq": {
+        "lb": 10,
+        "topStreak": 0,
+        "stalls": 0
+      },
+      "bor": {
+        "lb": 15,
+        "topStreak": 0,
+        "stalls": 0
+      }
+    },
+    "adjustments": [
+      {
+        "day": "thu",
+        "text": "Thanksgiving: do the tempo ride in the morning"
+      },
+      {
+        "day": "thu",
+        "text": "Split squat: keep 10 lb, cut reps if it hurts"
+      }
+    ]
   },
   "rideTypes": {
     "hiit": {
