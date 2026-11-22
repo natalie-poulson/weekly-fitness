@@ -18,7 +18,8 @@ Mid-week: `/meal-swap` changes one meal; `/good-eggs` suggests kits (never order
 | `node coach/build-plan.mjs [flags] --save` | Builds next week and saves the new values, the easier-week counter and `lastPlanWeekOf` | `plan.json`, `coach/training.json` |
 | `node coach/update-block.mjs` | Daily targets for Natalie and B, plus the training days with a load tag | `coach/targets.local.json` (private) |
 | `node coach/stats.mjs [--in file]` | Prints the baseline, 3-week trend, workout and nutrition rates | nothing |
-| `node coach/check-meals.mjs [--week YYYY-MM-DD] [--strict]` | Checks Natalie's days and the week's food rules. ✗ = broken rule (exits 1); ! = warning; `--strict` fails on warnings too | nothing |
+| `node coach/check-meals.mjs [--week YYYY-MM-DD] [--strict]` | Checks Natalie's days and the week's food rules, including sources (every meal a sourced recipe or "Quick Assembly") and no fish leftovers. ✗ = broken rule (exits 1); ! = warning; `--strict` fails on warnings too | nothing |
+| `node coach/grocery-list.mjs [--week YYYY-MM-DD] [--json]` | Builds the grocery list from the plan: every ingredient by aisle, added up where the units match, with the meals it's for. Skips leftovers and `onHand` items (listed separately) and includes `prep` | nothing |
 | `node coach/encrypt.mjs [--save-keychain] [--ask] [--new-salt] [--in file]` | Copies the goal weight from `profile.json` into `history.json` (real history only), then encrypts using macOS Keychain (keeping the existing salt so your iPhone stays unlocked) | `history.enc` (and `history.json` when the goal changed) |
 
 ### build-plan.mjs flags
@@ -168,7 +169,7 @@ Tempo levels: L1 1 × 15 min (35 min) · L2 2 × 10 (35) · L3 2 × 12 (40) · L
 
 Written by `/meal-plan`, `/meal-swap` and `/good-eggs`; read by `check-meals.mjs`.
 
-**Plan:** `weekOf` (the Monday), `status` (`"draft"` or `"final"`; only final plans count toward the rolling 30-day limits), `newRecipeTarget` (4, or 2 once Paprika has about 20 recipes at 4★+), `plannedWith` { kcal, proteinG, status }, `days` (all 7).
+**Plan:** `prep` (optional: Sunday prep like cooking beans or grains, `[{ recipe, ingredients }]`, so its extras get bought), `weekOf` (the Monday), `status` (`"draft"` or `"final"`; only final plans count toward the rolling 30-day limits), `newRecipeTarget` (4, or 2 once Paprika has about 20 recipes at 4★+), `plannedWith` { kcal, proteinG, status }, `days` (all 7).
 
 **Day:** `day` (mon–sun), `office` (true or false on every weekday), `nightOut`, `holiday` (its name, or null), `swim`, `mealsOut` (away all day; nothing else planned), `meals`.
 
@@ -185,10 +186,11 @@ Written by `/meal-plan`, `/meal-swap` and `/good-eggs`; read by `check-meals.mjs
 | `protein` | breakfast, lunch, dinner | salmon, trout, sole, tuna, albacore, chicken breast, chicken thighs, turkey, ground chicken, ground turkey, chicken sausage, pork sausage, beef, lamb, tofu, tempeh, beans, lentils, chickpeas, eggs |
 | `tags` | any | carbForward, sweet, smoothie, sheetPan, prepAhead, frozenFish, burrata, fruit, needsFridge; `goodEggs` labels a Good Eggs meal (warns at ≥900 mg dinner sodium and skips new-recipe/favorite warnings on a Good Eggs week) |
 | `grains` | breakfast, lunch, dinner | `[{ name, servings, whole? }]`, servings in Natalie's portions; `whole` true, false or 0.5 overrides the guess (haiga rice counts as 0.5) |
-| `ingredients` | breakfast, lunch, dinner, preRide | `[{ name, amount, sideForB? }]`; nuts, seeds and pre-ride items need an `amount` |
-| `source`, `sourceUrl` | optional | |
+| `ingredients` | every planned meal and snack | `[{ name, amount, sideForB?, onHand? }]`, every ingredient including oil, salt and garnishes, because grocery-list.mjs builds the cart from these. `onHand: true` = already owned or bought for another meal (not added up) |
+| `source` | breakfast, lunch, dinner | the recipe's source (Paprika, NYT Cooking, an approved author) or `"Quick Assembly"` for no-recipe combinations with every amount listed |
+| `sourceUrl` | sourced recipes | required except for "Quick Assembly" and Natalie's own Paprika recipes; always required when `isNew` |
 | `leftoverOf` | a leftover lunch | the day of the dinner it comes from |
-| `extraPortion` | dinner | true on the one dinner that makes a leftover lunch |
+| `extraPortion` | dinner | true on the one dinner that makes a leftover lunch; never a fish dinner |
 | `tunaServings` | optional | overrides the count (tuna 1, albacore 2) |
 | `note` | `office` | the guide for office meals |
 

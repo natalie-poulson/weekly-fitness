@@ -31,13 +31,13 @@ People: **Natalie** (the training plan and every meal check are hers) and **B** 
 ## Slash commands
 
 - `/weekly-checkin` · Sunday morning review, decision, plan.json, encrypt, push, then hand off to /meal-plan.
-- `/meal-plan` · asks about office days, nights out, swims and holidays first; plans Natalie's week (dinner for B); fills all planned slots in the Paprika planner (including weekday smoothies/breakfasts, pre-ride snacks, and daily snacks with portions), puts portions in recipe Notes and adds to the Paprika "Groceries" list.
-- `/meal-swap` · changes one meal mid-week, with the same Notes and Groceries rules.
+- `/meal-plan` · asks about office days, nights out, swims and holidays first; plans Natalie's week (dinner for B); fills all planned slots in the Paprika planner (including weekday smoothies/breakfasts, pre-ride snacks, and daily snacks with portions), puts portions in recipe Notes and adds to the Paprika "My Grocery List" (aisle, amount and meals on every item).
+- `/meal-swap` · changes one meal mid-week, with the same Notes and grocery rules.
 - `/good-eggs` · Good Eggs meal kits and prepared meals for one swap or a too-tired week. Suggestions only: never log in, add to cart or order.
 
 ## Tools
 
-- **Paprika MCP** (bojanrajkovic/mcp-paprika): recipes (read and write), meal planner, grocery lists. Add only to the default "Groceries" list; never clear or overwrite items, and never make weekly lists. Good Eggs meals go in the planner as "[Good Eggs] <name>" and never on Groceries.
+- **Paprika MCP** (bojanrajkovic/mcp-paprika): recipes (read and write), meal planner, grocery lists. Add only to "My Grocery List" (her only list); never clear or overwrite items, and never make weekly lists. Good Eggs meals go in the planner as "[Good Eggs] <name>" and never on the grocery list.
 - **NYT Cooking MCP** (bramboe/nyt-cooking-mcp): recipe search and Natalie's saved favorites.
 - **Garmin Connect MCP** (Garmin Lily 2): activities with heart-rate zones and activity type (bike vs swim), daily steps, intensity minutes, resting heart rate, HRV status, Body Battery and Sleep Score. If Garmin isn't connected or something is missing, ask at the check-in.
 - **Web search**: used by /good-eggs and for recipe sources.

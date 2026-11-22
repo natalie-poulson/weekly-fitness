@@ -55,7 +55,11 @@ Training:
 The week (check-meals.mjs enforces all of these):
 - Dinners: 2+ fish (fresh Mon–Wed, bought today; Thu–Sun only if frozen, tag `frozenFish`), 2 vegetarian, the rest poultry or red meat inside the rolling 30-day limits. Chicken sausage at most 1, tuna at most 2 servings (albacore counts 2), burrata at most once, butter or cream on at most 2 dinners (1 tbsp butter, 2 tbsp cream per person). One dinner of up to 45 min on Sat or Sun.
 - About 1 dinner from the "sometimes" cuisines and about 1 favorite (`favorite: true`). `newRecipeTarget` new recipes (`isNew: true`).
-- One dinner makes an extra portion (`extraPortion: true`) for Wednesday's leftover lunch. Friday's lunch is the quick lunch.
+- One dinner makes an extra portion (`extraPortion: true`) for Wednesday's leftover lunch, and it is never a fish dinner. Friday's lunch is the quick lunch.
+- Sources: every breakfast, lunch and dinner is either a sourced recipe (`source` Paprika, NYT Cooking or an approved author, with `sourceUrl`) or `source: "Quick Assembly"`. Quick Assembly is only for no-recipe combinations with every amount listed: snacks, yogurt bowls, a simple sandwich, a hummus plate, leftovers, a steamed or roasted plain vegetable side. Anything cooked beyond that needs a sourced recipe; weekend egg breakfasts always do.
+- Leftovers: the only leftover is the one planned for another meal (Wed lunch). Scale every other recipe in its Coach Notes so Natalie's and B's portions use the whole batch, with nothing left to freeze.
+- Waste: plan so partial bunches and packages get used across the week (the rest of the spinach in a soup, a zested citrus as dessert, one lettuce head for two meals). Name anything that will still be left over in the review.
+- Ingredients: list every ingredient of every meal and snack with its amount, including oil, salt, garnishes, B's sides and anything used to cook beans or grains. `node coach/grocery-list.mjs` builds the grocery list from these, so a missing ingredient here is missing from the cart.
 - Every day for Natalie: kcal within ±10% of target (office and out entries count), protein at least 90%, sat fat, sodium and added sugar (15 g, not counting the sweet treat) under their limits. On home days also fiber at target, 3+ vegetable servings and 5+ vegetable and fruit servings. Every dinner has 2+ vegetable servings. At most 1 cheese portion a day (up to 2 tbsp Parmesan garnish doesn't count) and 170 g whole-milk yogurt.
 - Protein 25–30 g per meal (the smoothie 20 g), 10–15 g per snack (fruit snacks excepted). Fruit after dinner on weeknights when there's room.
 - Never: shellfish, cured meats, protein powder, olives other than Castelvetrano, 1–2★ recipes, or hot chile unless it's served on the side for B (`sideForB: true`). Eggs as a meal and sweets only on Sat/Sun. Low-sodium soy sauce, nitrate-free sausage, no-salt-added cans, rinsed beans. Nuts, seeds, nut butters and tahini always measured.
@@ -99,7 +103,7 @@ Write the plan to `coach/meal-history.local.json` → `plans`, replacing any pla
 ```
 
 - Every meal: `slot` and `per.natalie.kcal` and `proteinG`. Every planned food (not `office` or `out`): also `fiberG`, `satFatG`, `sodiumMg`, `addedSugarG`, `vegServings` and `fruitServings`, plus `cheesePortions`, `butterTbsp`, `creamTbsp` and `wholeMilkYogurtG` on meals (0 when none).
-- Breakfast, lunch and dinner: `recipe`, `cuisine`, `method`, `totalMin`, `rating` (Paprika stars; null if unrated), `isNew`, `favorite`, `protein`, `tags`, `grains` ({ name, servings in Natalie's servings, optional `whole`: true, false or 0.5 }) and `ingredients` ({ name, amount, optional `sideForB` }).
+- Breakfast, lunch and dinner: `recipe`, `source` (and `sourceUrl` unless it's "Quick Assembly"), `cuisine`, `method`, `totalMin`, `rating` (Paprika stars; null if unrated), `isNew`, `favorite`, `protein`, `tags`, `grains` ({ name, servings in Natalie's servings, optional `whole`: true, false or 0.5 }) and `ingredients` ({ name, amount, optional `sideForB` }).
 - `protein` tags: salmon, trout, sole, tuna, albacore, chicken breast, chicken thighs, turkey, ground chicken, ground turkey, chicken sausage, pork sausage, beef, lamb, tofu, tempeh, beans, lentils, chickpeas, eggs.
 - `tags`: carbForward, sweet, smoothie, sheetPan, prepAhead, frozenFish, burrata, fruit, goodEggs (never needsFridge on a pre-ride snack).
 - Leftover lunch: `leftoverOf: "<day of the dinner>"`; that dinner has `extraPortion: true`. `tunaServings` only to override the default count.
@@ -112,16 +116,18 @@ Run `node coach/check-meals.mjs --week <weekOf>`. Fix every ✗ and run it again
 
 Show:
 1. Week of <Mon date> · planned for a <status> week · Natalie <kcal> kcal / <protein> g protein · B dinner ~<kcal> kcal / <protein> g.
-2. A 7-day table: Day | Flags | Breakfast | Lunch | Dinner | Snacks | Natalie kcal / protein | B dinner kcal / protein. On office days: "Office: <kcal> kcal, <g> g protein left (palm of protein, half a plate of veg)". On nights out: "Out: ~<kcal> kcal".
-3. Pre-ride snacks with exact portions.
-4. The week: fish <n>, vegetarian <n>, new <n>/<target>, favorite, red meat <n> in the last 30 days, sweet treat(s).
-5. Sunday prep (30 min, up to 45): Instant Pot beans (soak Saturday night if needed), haiga rice or another grain, wash greens and cut veg, any sauce or dressing. Prep-ahead steps the day before (thaw fish, marinate).
-6. Any warnings check-meals left, one line each, and one line saying the nutrition numbers are estimates.
+2. A 7-day table: Day | Breakfast | Lunch | Dinner | Snacks. Every meal shows its source in italics (*Paprika · NYT Cooking*, *NYT Cooking (author)*, *Quick Assembly*); Quick Assembly items show every amount. The Snacks column lists every snack for the day, pre-ride snacks included, with time and exact portions. Snacks appear only here, never in a second section. On office days: "Office: <kcal> kcal, <g> g protein left (palm of protein, half a plate of veg)". On nights out: "Out: ~<kcal> kcal". Below the table: the daily Natalie kcal / protein range and B's dinner range.
+3. The week: fish <n>, vegetarian <n>, new <n>/<target>, favorite, red meat <n> in the last 30 days, sweet treat(s).
+4. Weight goal: one line on how the week lines up with it (target vs estimated burn, expected loss per week, days that run over target, the biggest unplanned risk such as a holiday dinner).
+5. Leftovers and waste: the one planned leftover, and anything that will still be left over because of package sizes.
+6. Sunday prep (30 min, up to 45): Instant Pot beans (soak Saturday night if needed), haiga rice or another grain, wash greens and cut veg, any sauce or dressing. Prep-ahead steps the day before (thaw fish, marinate).
+7. Any warnings check-meals left, one line each, and one line saying the nutrition numbers are estimates.
 
 Then ask: "Reply 'looks good', or tell me what to swap." After each swap, run check-meals again and show only the days that changed.
 
 ## 5. After "looks good": Paprika
 
+0. Preview first. Before writing anything to Paprika, show exactly what will be written: each new recipe's full text, every Coach Notes block, every planner entry, and the full grocery list from `node coach/grocery-list.mjs` (aisle, quantity, meals). Wait for "looks good" on that preview too. Check Paprika for missing pieces before writing: create the "Coach" category if it doesn't exist.
 1. New recipes: check Paprika for the same name or source URL first. If it isn't there, create it using the exact verbatim ingredients, quantities, and directions fetched from the NYT Cooking MCP or the verified `sourceUrl`—never paraphrase steps or estimate amounts from memory. Set servings, total time, source, `sourceUrl`, and category "Coach". Leave the rating empty; Natalie rates it after cooking.
 2. Every recipe used next week: write a coach block in its Notes. Replace any older coach block and leave her own notes as they are. Never change the recipe's own ingredients or directions.
    ```
@@ -138,8 +144,10 @@ Then ask: "Reply 'looks good', or tell me what to swap." After each swap, run ch
    - **Snack**: every `preRide` snack (e.g. `Pre-ride (3:30p): 1 medium banana + 1 tbsp peanut butter`) and daily `snack` entries with exact portions (e.g. `Snack: 3/4 cup Straus nonfat Greek yogurt`).
    Remove any coach entries already there for those dates first. Leave entries she added herself alone.
 4. Grocery list:
-   - Add items directly to Natalie's default **"Groceries"** list in Paprika. Never create separate weekly lists.
+   - Add items directly to Natalie's **"My Grocery List"** in Paprika (her only list). Never create separate weekly lists.
    - **Never override or clear what's already in the cart/list** — only add the new items to it.
+   - Build the list with `node coach/grocery-list.mjs --week <weekOf>`: it totals every ingredient in the plan and names the meals each one is for. Then check it against each recipe's full ingredient list in Paprika or the source (garnishes, bean-cooking extras like bay leaf, onion and garlic, B's sides). Add things she already has as "You have these" lines.
+   - Every item gets an explicit `aisle` (never leave it to auto-resolve; it lands in Miscellaneous), a `quantity` (spices and oils too; salt and pepper "to taste"), and an `instruction` naming each meal and amount, e.g. "Tue tagine (1 tsp) · Sun fried eggs (1/4 tsp)".
    - In the chat, display one simple, ungrouped grocery list (do not group by store), adding up amounts across recipes (e.g. 3/4 lb salmon, 1 1/2 bunches chard), including snacks, smoothie ingredients and staples. Put pantry basics (oil, salt, spices, vinegar) on the list too, so she can tick off what she has.
 5. Set `status: "final"` in meal-history and run check-meals once more. Final plans count toward the rolling 30-day limits. meal-history is private: never commit it.
 6. Finish with: the recipes added to Paprika, the Notes updated, the meal planner filled, the grocery items added, the Sunday prep list, and a reminder to rate each new recipe in Paprika after cooking it.

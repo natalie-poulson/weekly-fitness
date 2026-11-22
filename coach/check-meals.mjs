@@ -172,6 +172,20 @@ function checkFood(m, where) {
   if (/sausage/.test(all) && !protOf(m).some(p => /sausage/.test(p))) warn(label, 'has sausage: tag it "chicken sausage" or "pork sausage" so the limits count it');
   if (m.slot === 'dinner' && !protOf(m).length) warn(label, 'no protein tag');
   if (isNum(m.rating) && m.rating <= 2) bad(label, `rated ${m.rating}★ in Paprika; 1-2★ recipes are never repeated`);
+
+  // Sources: every meal is a sourced recipe or a Quick Assembly; every food has its amounts
+  const quick = /^quick assembly/.test(low(m.source));
+  if (['breakfast', 'lunch', 'dinner'].includes(m.slot) && !hasTag(m, 'goodEggs')) {
+    if (!m.source) bad(label, 'no source: use the recipe source (Paprika, NYT Cooking, an approved author) or "Quick Assembly"');
+    else if (!quick && !m.sourceUrl && (m.isNew || low(m.source) !== 'paprika')) bad(label, `source "${m.source}" needs a sourceUrl (only Natalie's own Paprika recipes can skip it)`);
+  }
+  if (!['office', 'out'].includes(m.slot) && !m.leftoverOf) {
+    if (!ingsOf(m).length) warn(label, 'no ingredients listed, so grocery-list.mjs will miss them');
+    else if (quick || ['snack', 'preRide'].includes(m.slot)) {
+      const noAmt = ingsOf(m).filter(i => !low(i.amount)).map(i => i.name);
+      if (noAmt.length) warn(label, `give every item an amount: ${noAmt.join(', ')}`);
+    }
+  }
 }
 
 // ---- Day by day ----
@@ -387,6 +401,7 @@ if (!fullGoodEggs && !dinnersW.some(r => r.m.favorite || favNames.includes(nameK
 // Leftovers: 1 dinner makes an extra portion for a work-from-home lunch
 const extra = dinnersW.filter(r => r.m.extraPortion);
 if (extra.length > 1) warn('week', `${extra.length} dinners make an extra portion; 1 a week`);
+for (const r of extra) if (isFishMeal(r.m)) bad(r.k, `"${r.m.recipe}" is fish; a fish dinner is never the leftover (pick a non-fish dinner for the extra portion)`);
 const lefts = planned.filter(r => r.m.slot === 'lunch' && r.m.leftoverOf);
 if (lefts.length > 1) warn('week', `${lefts.length} leftover lunches; 1 a week plus 1 quick lunch`);
 for (const r of lefts) {
