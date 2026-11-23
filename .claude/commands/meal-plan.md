@@ -8,7 +8,8 @@ Follow CLAUDE.md. Everything read here is private: never copy kcal, weights or t
 
 ## 0. Read first
 
-1. Dates: run on Sunday morning right after /weekly-checkin. Meal weeks run **Sunday dinner to the next Sunday's breakfast**: `weekOf` = today (the Sunday she shops), YYYY-MM-DD, and tonight's dinner is the first meal, so the freshest food is cooked first. Sunday is planned `dinnerOnly: true` (she has already eaten breakfast and lunch before shopping; an after-dinner snack is fine). The last day is `nextSun` with `breakfastOnly: true`: next Sunday's breakfast, eaten that morning while she plans the following week, bought with this week's groceries. Next week's plan then starts with that Sunday's dinner. On another day, use the coming Sunday and say so. (The workout week in plan.json still runs Monday to Sunday; only meals moved.)
+0. `coach/MEAL-RULES.md`: every meal rule (read it in full first).
+1. Dates: `weekOf` = today, the Sunday she shops (YYYY-MM-DD); the plan runs from tonight's dinner to next Sunday's breakfast (`nextSun`), as in MEAL-RULES.md. On another day, use the coming Sunday and say so.
 1a. The plan just before this one in meal-history: if it has `carryOver` (food already bought but not used), use those items first and mark them `onHand: true` so they aren't bought twice.
 2. `coach/targets.local.json`: Natalie's kcal, proteinG, fiberG, satFatMaxG, sodiumMaxMg; B's kcal and proteinG; `status`; `trainingDays`. These are this week's targets (already updated by this morning's check-in).
 3. `coach/training.json` → `current.status`. If it is `DELOAD`: plan Tue/Thu as rest days for meals (no pre-ride snack), skip the carb-forward dinners, and say so in the review. Otherwise plan the normal week.
@@ -26,6 +27,7 @@ Ask the `household.askBeforePlanning` questions, with defaults filled in so "def
 - Swimming instead of biking on Tue or Thu? (rare)
 - Holidays or special days (e.g. Thanksgiving, Thu Nov 26: ride as usual, dinner at a friend's)?
 - Anything else: guests, a late night, travel, food to use up?
+- Already at home in quantity (eggs, yogurt, bread, tortillas)? (sets `plan.stock` so the package check counts it)
 - Too tired to cook next week? If yes, suggest /good-eggs instead.
 
 If B's weight or activity changed, update coach/profile.json and run `node coach/update-block.mjs`.
@@ -42,44 +44,7 @@ Set every day's flags first:
 - `breakfastOnly`: true on `nextSun`, the last day (only breakfast; the day isn't totalled)
 - `unplanned`: true only for a day another plan covers (e.g. switching week formats)
 
-| Day | Plan these slots |
-|---|---|
-| Office day | `dinner`, an `office` entry, snacks; `preRide` on a ride day |
-| Home weekday | `breakfast` (5 min or less, no oats, no eggs), `lunch` (10 min or less), `dinner`, snacks; on Wed/Fri the 11:30 snack is the `preRide` slot (100–200 kcal) |
-| Sunday (shopping day) | `dinner` (carb-forward, the up-to-45-min dinner is fine here), an optional evening snack; `dinnerOnly: true` |
-| Next Sunday (`nextSun`, planning morning) | cooked savory `breakfast` only (eggs OK, ready while she plans), from food bought this week; `breakfastOnly: true` |
-| Saturday | cooked savory `breakfast` (~10:00, the bigger meal; eggs OK), light `lunch`, `dinner` (6:00–7:00), snacks; the weekend sweet treat (1–2 a week, Sat or Sun evening) |
-| Night out | no dinner; an `out` entry of 900–1,000 kcal; breakfast + lunch (or the office entry) about 250 kcal lighter in total |
-| Holiday | no dinner; the rest of the day light, like a night out. If it's a ride day she still rides, so plan the pre-ride snack. |
-| Away all day | `mealsOut: true`, nothing else |
-
-Training:
-- Evening ride days (Mon/Tue/Thu with a ride in trainingDays): `preRide` snack of 150–200 kcal, packed from home for ~3:30–4:00, every item with an exact amount, nothing that needs a fridge. Dinner (~6:30) is the recovery meal: 30 g+ protein for Natalie plus a starch, 30 min or less using Sunday prep.
-- Carb-forward Sunday dinner is tonight's (the night before Monday HIIT), the first meal of the plan.
-- Carb-forward dinner (rice, pasta, potatoes or polenta; tag `carbForward`) on Wed and Sun. Skip it on a DELOAD week.
-- DELOAD week: Tue/Thu are rest days for meals, so no pre-ride snack. Portions stay the same.
-- Swim night: dinner ~7:45, sheet-pan or prepped ahead (tag `sheetPan` or `prepAhead`).
-
-The week (check-meals.mjs enforces all of these):
-- Dinners: 2+ fish (fresh only Sun–Mon, since USDA says to cook or freeze raw fish within 1–2 days and Tue dinner is about 2½ days after Sunday shopping; fish for Tue–Sat is frozen on shopping day, tagged `frozenFish`, with a planner reminder the night before to move it to the fridge to thaw), 2 vegetarian, the rest poultry or red meat inside the rolling 30-day limits. Chicken sausage at most 1, tuna at most 2 servings (albacore counts 2), burrata at most once, butter or cream on at most 2 dinners (1 tbsp butter, 2 tbsp cream per person). One dinner of up to 45 min on Sat or Sun.
-- Leftovers at the end: nothing bought for the week should be left after next Sunday's breakfast. If something still is (a plan changed), list it as `carryOver` [{ name, amount, note }] on the plan so next Sunday's plan uses it first.
-- About 1 dinner from the "sometimes" cuisines and about 1 favorite (`favorite: true`). `newRecipeTarget` new recipes (`isNew: true`).
-- One dinner makes an extra portion (`extraPortion: true`) for Wednesday's leftover lunch, and it is never a fish dinner. Friday's lunch is the quick lunch.
-- Sources: every breakfast, lunch and dinner is either a sourced recipe (`source` Paprika, NYT Cooking or an approved author, with `sourceUrl`) or `source: "Quick Assembly"`. Quick Assembly is only for no-recipe combinations with every amount listed: snacks, yogurt bowls, a simple sandwich, a hummus plate, leftovers, a steamed or roasted plain vegetable side. Anything cooked beyond that needs a sourced recipe; weekend egg breakfasts always do.
-- Rice, grains and beans: always cooked from dry. Every amount (ingredients, recipe Notes, prep, grocery list) gives the dry quantity to cook, usually in the Instant Pot the day it's eaten; plate portions may be cooked cups with "from X dry". Canned beans only when the plan says so. check-meals fails a rice, grain or bean amount with no dry quantity.
-- Leftovers: the only leftover is the one planned for another meal (Wed lunch). Scale every other recipe in its Coach Notes so Natalie's and B's portions use the whole batch, with nothing left to freeze.
-- Waste: plan so partial bunches and packages get used across the week (the rest of the spinach in a soup, a zested citrus as dessert, one lettuce head for two meals). Name anything that will still be left over in the review.
-- Ingredients: list every ingredient of every meal and snack with its amount, including oil, salt, garnishes, B's sides and anything used to cook beans or grains. `node coach/grocery-list.mjs` builds the grocery list from these, so a missing ingredient here is missing from the cart.
-- Every day for Natalie: kcal within ±10% of target (office and out entries count), protein at least 90%, sat fat, sodium and added sugar (15 g, not counting the sweet treat) under their limits. On home days also fiber at target, 3+ vegetable servings and 5+ vegetable and fruit servings. Every dinner has 2+ vegetable servings. At most 1 cheese portion a day (up to 2 tbsp Parmesan garnish doesn't count) and 170 g whole-milk yogurt.
-- Protein 25–30 g per meal (the smoothie 20 g), 10–15 g per snack (fruit snacks excepted). Fruit after dinner on weeknights when there's room.
-- Never: shellfish, cured meats, protein powder, olives other than Castelvetrano, 1–2★ recipes, or hot chile unless it's served on the side for B (`sideForB: true`). Eggs as a meal and sweets only on Sat/Sun. Low-sodium soy sauce, nitrate-free sausage, no-salt-added cans, rinsed beans. Nuts, seeds, nut butters and tahini always measured.
-- Variety: no recipe twice in a week. Recipes that share a non-pantry ingredient differ in cuisine and cooking method. Dinners from last week repeat only if rated 4–5★. At least half of grain servings are whole grain (haiga rice counts as half).
-
-Recipes (zero hallucination): Check Paprika first (4–5★ any time; unrated means untested), then NYT Cooking MCP, then web search for published recipes by NYT Cooking, Ina Garten, Alison Roman, Smitten Kitchen, Claire Saffitz, or Courtney Storer (courtneystorer.substack.com; only posts whose full recipe is free to read) (max 2 dinners per source). Build around what's in season. Never create original recipes or reconstruct cookbook recipes from memory—every new candidate must have a live `sourceUrl` whose exact ingredient list and directions you fetched and verified in this session. Adapt to Natalie's rules only in the Coach Notes block (e.g. chicken breasts for thighs, Straus nonfat yogurt, chile on the side for B), keeping the base recipe text verbatim.
-
-Portions and nutrition: size Natalie's portions to fill her day; B's dinner is 35–40% of his kcal and protein. Use the staple label values in meal-prefs, otherwise standard nutrition data. Round kcal to 5 and grams to whole numbers. These are estimates; say so once in the review.
-
-Office entry: kcal = Natalie's target minus that day's planned food; proteinG = protein target minus planned protein. Put the guide in `note`: "steel-cut oats; a palm of protein and half a plate of vegetables at lunch". If proteinG is over 40, add a protein snack (e.g. Straus nonfat yogurt) or a bigger dinner portion.
+Then plan every day by **coach/MEAL-RULES.md** (the slots for each kind of day, training, the week's rules, recipes, portions, food safety, packages and Paprika). It is the only place the rules are written down.
 
 ## 3. Save the draft and check it
 
@@ -119,6 +84,8 @@ Write the plan to `coach/meal-history.local.json` → `plans`, replacing any pla
 - Leftover lunch: `leftoverOf: "<day of the dinner>"`; that dinner has `extraPortion: true`. `tunaServings` only to override the default count.
 - B: `per.b` { kcal, proteinG } on every dinner.
 - `plannedWith`: the targets and status used.
+- Paprika (written now, so the preview and the sync come straight from the plan): `recipes` [{ uid, title, notes: [Coach Notes lines] }] on every meal with a Paprika recipe (look up or create the recipe first to get its uid), `plannerName` on every meal without one (Quick Assembly: every amount; office: "Office: ~<kcal> kcal / <g> g protein left (<guide>)"), `plannerExtras` for side entries, and `plan.reminders` [{ day, type, text }].
+- Packages: `plan.buy` for anything bought by the package, `plan.stock` for food already at home (ask; "enough" only when she confirms).
 
 Run `node coach/check-meals.mjs --week <weekOf>`. Fix every ✗ and run it again until it passes. Fix warnings where it's easy; list the rest in the review. Never show a plan that fails.
 
@@ -130,36 +97,22 @@ Show:
 3. The week: fish <n>, vegetarian <n>, new <n>/<target>, favorite, red meat <n> in the last 30 days, sweet treat(s).
 4. Weight goal: one line on how the week lines up with it (target vs estimated burn, expected loss per week, days that run over target, the biggest unplanned risk such as a holiday dinner).
 5. Leftovers and waste: the one planned leftover, and anything that will still be left over because of package sizes.
-6. Sunday prep (30 min, up to 45, done after shopping, alongside tonight's dinner): any grain or beans that can't be cooked the day they're eaten (haiga rice and dried beans are usually cooked in the Instant Pot the day they're eaten: it's hands-off, so that time doesn't count toward a dinner's time limit; put the dry amount in that meal's Notes plus a planner reminder that day to start it early enough; only batch them on Sunday when Natalie asks or several meals share one pot, and then give the total dry amount and which meals it covers), wash greens and cut veg, any sauce or dressing. Prep-ahead steps the day before (thaw fish in the fridge, marinate), each added to the Paprika planner as a reminder on the day it happens, plus a "Freeze tonight" reminder on Sunday for any fish cooked Tue or later (and meat cooked Wed or later).
+6. Sunday prep and reminders: the Sunday prep list, then each day's reminders (freeze, thaw, Instant Pot, prep-ahead) from `plan.reminders`, as MEAL-RULES.md describes.
 7. Any warnings check-meals left, one line each, and one line saying the nutrition numbers are estimates.
 
 Then ask: "Reply 'looks good', or tell me what to swap." After each swap, run check-meals again and show only the days that changed.
 
 ## 5. After "looks good": Paprika
 
-0. Preview first. Before writing anything to Paprika, show exactly what will be written: each new recipe's full text, every Coach Notes block, every planner entry, and the full grocery list from `node coach/grocery-list.mjs` (aisle, quantity, meals). Wait for "looks good" on that preview too. Check Paprika for missing pieces before writing: create the "Coach" category if it doesn't exist.
-1. New recipes: check Paprika for the same name or source URL first. If it isn't there, create it using the exact verbatim ingredients, quantities, and directions fetched from the NYT Cooking MCP or the verified `sourceUrl`—never paraphrase steps or estimate amounts from memory. Set servings, total time, source, `sourceUrl`, and category "Coach". Leave the rating empty; Natalie rates it after cooking.
-2. Every recipe used next week: write a coach block in its Notes. Replace any older coach block and leave her own notes as they are. Never change the recipe's own ingredients or directions.
-   ```
-   — Coach · week of 2026-11-29 · Mon dinner —
-   Natalie: 1 fillet (4 oz) + 3/4 cup rice (560 kcal, 38 g protein)
-   B: 6 oz salmon + 1 1/4 cups rice (800 kcal, 52 g protein)
-   Changes: Straus nonfat Greek yogurt for the sauce; chile crisp on the side for B.
-   Prep: none.
-   ```
-3. Meal planner: add every planned slot to the Paprika meal planner on its date (Sun = weekOf = today; `nextSun` = weekOf + 7, breakfast only) so Natalie never has to check Sunday's chat transcript mid-week:
-   - **Breakfast**: weekend breakfasts AND work-from-home weekday breakfasts (smoothies or quick breakfasts, including portion notes if not a standalone recipe).
-   - **Lunch**: weekday home lunches and weekend light lunches.
-   - **Dinner**: every planned dinner.
-   - **Snack**: every `preRide` snack (e.g. `Pre-ride (3:30p): 1 medium banana + 1 tbsp peanut butter`) and daily `snack` entries with exact portions (e.g. `Snack: 3/4 cup Straus nonfat Greek yogurt`).
-   Remove any coach entries already there for those dates first. Leave entries she added herself alone.
-4. Grocery list:
-   - Add items directly to Natalie's **"My Grocery List"** in Paprika (her only list). Never create separate weekly lists.
-   - **Never override or clear what's already in the cart/list** — only add the new items to it.
-   - Build the list with `node coach/grocery-list.mjs --week <weekOf>`: it totals every ingredient in the plan and names the meals each one is for. Then check it against each recipe's full ingredient list in Paprika or the source (garnishes, bean-cooking extras like bay leaf, onion and garlic, B's sides). Add things she already has as "You have these" lines.
-   - Every item gets an explicit `aisle` (never leave it to auto-resolve; it lands in Miscellaneous), a `quantity` (spices and oils too; salt and pepper "to taste"), and an `instruction` naming each meal and amount, e.g. "Tue tagine (1 tsp) · Sun fried eggs (1/4 tsp)".
-   - In the chat, display one simple, ungrouped grocery list (do not group by store), adding up amounts across recipes (e.g. 3/4 lb salmon, 1 1/2 bunches chard), including snacks, smoothie ingredients and staples. Put pantry basics (oil, salt, spices, vinegar) on the list too, so she can tick off what she has.
-5. Set `status: "final"` in meal-history and run check-meals once more. Final plans count toward the rolling 30-day limits. meal-history is private: never commit it.
-6. Finish with: the recipes added to Paprika, the Notes updated, the meal planner filled, the grocery items added, the Sunday prep list, and a reminder to rate each new recipe in Paprika after cooking it.
+Paprika is written from the plan, never by hand, and every write is recorded so an interrupted session can resume. If a session stopped partway, start at step 2: the sync shows exactly what's left.
+
+1. Check and preview. Run `node coach/grocery-list.mjs --week <weekOf>` (fix any package ✗) and `node coach/paprika-sync.mjs --week <weekOf>` (fix any ✗: numbers or proteins in the text that don't match the plan, missing freeze/thaw or Instant Pot reminders). Show the preview: each new recipe's full text, every Coach Notes block and planner entry the sync prints, and the full grocery list (aisle, quantity, meals). Wait for "looks good" on the preview too. Create the "Coach" category if it doesn't exist.
+2. New recipes: check Paprika for the same name or source URL first. If it isn't there, create it from the exact verbatim ingredients, quantities and directions fetched from the NYT Cooking MCP or the verified `sourceUrl` (never paraphrase steps or estimate amounts from memory). Set servings, total time, source, `sourceUrl` and category "Coach"; leave the rating empty. Put its uid in the meal's `recipes`.
+3. Planner: send `addMeals` from `node coach/paprika-sync.mjs --json` to add_meals (and delete_meal anything in `deleteMeals`). Save each tool output to a file in the scratchpad and run `node coach/paprika-sync.mjs record <file>` right away, one batch at a time.
+4. Notes: for each block the sync prints, read the recipe, replace its old Coach block with the new one (keep her own notes below it), then `node coach/paprika-sync.mjs notes-done <recipeUid>`.
+5. Grocery list: add the grocery-list.mjs items to "My Grocery List" following the Paprika rules in MEAL-RULES.md, and `record` the add_grocery_items output.
+6. Confirm: save list_meal_history (weekOf to weekOf + 7) and read_grocery_list outputs to files and run `compare <file>` and `compare-grocery <file>`. Fix anything they list. Both must pass.
+7. Set `status: "final"` in meal-history and run check-meals once more. Final plans count toward the rolling 30-day limits. meal-history is private: never commit it.
+8. In the chat, show one simple, ungrouped grocery list with amounts added up across recipes (pantry basics included, so she can tick off what she has). Finish with: the recipes added, the Notes updated, the planner filled, the grocery items added, the Sunday prep list, and a reminder to rate each new recipe in Paprika after cooking it.
 
 To change a meal mid-week, use /meal-swap. For a too-tired week, use /good-eggs.

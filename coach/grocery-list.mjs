@@ -5,6 +5,10 @@
 // then checks it against each recipe's full ingredient list. Writes nothing. Private output: don't commit it.
 // Ingredients with `onHand: true` (already owned, or the same item bought for another meal) are listed
 // separately and not added up. plan.prep holds shopping-day prep (beans, grains) so its extras are bought too.
+// Packages: plan.buy [{ name, amount }] says how an item is bought ("1 dozen", "2 (32-oz) tubs"); plan.stock
+// [{ name, amount }] is extra already at home ("enough" when Natalie confirms she has plenty), and the previous
+// plan's carryOver counts as stock too. Every use of that item this week (on-hand uses included) is added up and
+// compared: ✗ (exit 1) when the week needs more than there is, ! when a lot is left over.
 //
 //   node coach/grocery-list.mjs                     # latest plan
 //   node coach/grocery-list.mjs --week 2026-11-29   # the plan starting that Sunday
@@ -113,6 +117,62 @@ for (const { k, m } of sources) {
   }
 }
 
+// ---- Packages: does what's bought (plus what's at home) cover every use? ----
+const allUses = new Map();   // key -> [{ amount, where }] including onHand uses
+for (const { k, m } of sources) {
+  if (['office', 'out'].includes(m.slot) || m.leftoverOf) continue;
+  for (const i of m.ingredients || []) {
+    if (!i || !i.name) continue;
+    const key = keyOf(i.name);
+    if (!allUses.has(key)) allUses.set(key, []);
+    allUses.get(key).push({ amount: i.amount || '', where: `${DAY[k]} ${SLOT[m.slot] || m.slot}` });
+  }
+}
+// Units: count, volume (tsp) or weight (g). Volume and weight convert only with a known density (g per cup).
+const VOL = { tsp: 1, tbsp: 3, cup: 48 }, WT = { g: 1, oz: 28.35, lb: 453.6 };
+const DENSITY = { 'straus nonfat greek yogurt': 227, 'greek yogurt': 227, yogurt: 227, 'haiga rice': 184, rice: 185 };
+const COUNT_WORDS = { dozen: 12, ct: 1, count: 1 };
+function measure(a) {
+  // "2 (32-oz) tubs" / "1 (14.5-oz) can": outer count × inner size
+  const raw = String(a || '').toLowerCase().trim();
+  if (/^enough\b/.test(raw)) return { inf: true };
+  const pk = raw.match(/^(\d+(?:\.\d+)?|\d+\/\d+)\s*\((\d+(?:\.\d+)?)[- ]?(oz|lb|g|ct|count)\b/);
+  if (pk) { const n = pk[1].includes('/') ? pk[1].split('/').reduce((x, y) => x / y) : Number(pk[1]); const u = pk[3]; return u in WT ? { w: n * Number(pk[2]) * WT[u] } : { c: n * Number(pk[2]) }; }
+  const dz = raw.match(/^(\d+(?:\.\d+)?)?\s*(dozen)\b/); if (dz) return { c: (Number(dz[1]) || 1) * 12 };
+  const p = parse(a); if (!p) return null;
+  if (p.unit === '') return { c: p.qty };
+  if (p.unit in VOL) return { v: p.qty * VOL[p.unit] };
+  if (p.unit in WT) return { w: p.qty * WT[p.unit] };
+  return null;
+}
+function toBase(m, key, want) {   // want: 'c' | 'v' | 'w'
+  if (!m) return null; if (m.inf) return Infinity;
+  if (want in m) return m[want];
+  const g = Object.entries(DENSITY).find(([n]) => key.includes(n)); if (!g) return null;
+  if (want === 'w' && 'v' in m) return m.v / 48 * g[1];
+  if (want === 'v' && 'w' in m) return m.w / g[1] * 48;
+  return null;
+}
+const showQty = (x, want) => want === 'c' ? fmt(x) : want === 'w' ? `${Math.round(x)} g` : x >= 48 ? `${fmt(x / 48)} cup` : x >= 3 ? `${fmt(x / 3)} tbsp` : `${fmt(x)} tsp`;
+const prev = plans[plans.indexOf(plan) - 1];
+const stockOf = key => [...(plan.stock || []), ...((prev && prev.carryOver) || [])].filter(x => x && x.name && keyOf(x.name) === key);
+const packages = [];
+for (const b of plan.buy || []) {
+  const key = keyOf(b.name), bought = measure(b.amount);
+  if (!bought) { packages.push({ bad: true, line: `${b.name}: can't read the bought amount "${b.amount}" (use e.g. "1 dozen" or "2 (32-oz) tubs")` }); continue; }
+  const want = 'c' in bought ? 'c' : 'w' in bought ? 'w' : 'v';
+  const uses = allUses.get(key) || [];
+  let need = 0, unknown = [];
+  for (const u of uses) { const q = toBase(measure(u.amount), key, want); if (q == null) unknown.push(`${u.where}: ${u.amount || '?'}`); else need += q; }
+  let have = toBase(bought, key, want);
+  for (const s of stockOf(key)) { const q = toBase(measure(s.amount), key, want); if (q != null) have += q; }
+  const line = `${b.name}: uses ${showQty(need, want)} of ${have === Infinity ? 'plenty (at home)' : showQty(have, want)} (bought ${b.amount}${stockOf(key).length ? ' + at home' : ''})`;
+  if (unknown.length) packages.push({ warn: true, line: `${line}; couldn't count ${unknown.join(', ')}` });
+  if (need > have + 1e-9) packages.push({ bad: true, line: `${line} → short ${showQty(need - have, want)}: buy more or change a meal` });
+  else if (have !== Infinity && have - need > Math.max(have * 0.15, want === 'c' ? 1 : 0)) packages.push({ warn: true, line: `${line} → ${showQty(have - need, want)} left over: use it or add it to carryOver` });
+  else if (!unknown.length) packages.push({ ok: true, line });
+}
+
 const out = [...items.values()].map(it => {
   const parsed = it.uses.map(u => parse(u.amount));
   const units = new Set(parsed.map(p => p && p.unit));
@@ -120,7 +180,7 @@ const out = [...items.values()].map(it => {
   return { name: it.name, aisle: aisleOf(it.name.toLowerCase()), total, forB: it.forB, uses: it.uses };
 }).sort((a, b) => a.aisle.localeCompare(b.aisle) || a.name.localeCompare(b.name));
 
-if (args.includes('--json')) { console.log(JSON.stringify({ weekOf: plan.weekOf, items: out, onHand, missingAmount }, null, 2)); process.exit(0); }
+if (args.includes('--json')) { console.log(JSON.stringify({ weekOf: plan.weekOf, items: out, onHand, missingAmount, packages }, null, 2)); process.exit(0); }
 
 console.log(`Grocery list · week of ${plan.weekOf} (${plan.status || 'draft'}) · ${out.length} items from the plan`);
 let aisle = null;
@@ -133,4 +193,10 @@ for (const it of out) {
 }
 if (onHand.length) { console.log(`\nAlready have or counted with another meal (add "You have these" lines for pantry items she owns):`); for (const x of onHand) console.log('  · ' + x); }
 if (missingAmount.length) { console.log(`\n! ${missingAmount.length} ingredient(s) without an amount:`); for (const x of missingAmount) console.log('  ! ' + x); }
+const short = packages.filter(p => p.bad).length;
+if (packages.length) {
+  console.log('\nPackages (bought + at home vs every use this week):');
+  for (const p of packages) console.log(`  ${p.bad ? '✗' : p.warn ? '!' : '✓'} ${p.line}`);
+} else console.log('\nPackages: none set. Add plan.buy for anything bought by the package (eggs, yogurt tubs, bread, tortillas) so shortfalls get caught.');
 console.log('\nNext: check every recipe\'s full ingredient list in Paprika or its source (garnishes, bean/grain cooking extras, B\'s sides), then add each item to My Grocery List with its aisle, quantity and these meals.');
+if (short) { console.log(`✗ ${short} package problem(s): fix before shopping.`); process.exit(1); }

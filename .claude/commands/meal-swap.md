@@ -17,19 +17,11 @@ Follow CLAUDE.md. Everything read here is private: never copy kcal, weights or t
    - `coach/targets.local.json`: current targets and training schedule.
    - `coach/meal-prefs.local.json`: food rules, favorites, and staples.
    - `coach/meal-history.local.json`: find the current week's plan (`status: "final"` or `"draft"`).
+   - `coach/MEAL-RULES.md`: every meal rule. The swap must still follow all of them.
 
 ## 2. Offer 3 candidates
 
-Offer 3 real, verified options from Paprika (4–5★ or untested), NYT Cooking MCP, or a fetched web URL from Natalie's approved authors (Ina Garten, Alison Roman, Smitten Kitchen, Claire Saffitz, Courtney Storer at courtneystorer.substack.com, free posts only)—never invent a dish or guess recipe quantities from memory:
-- Prioritize recipes using what's already on hand or in the pantry to minimize extra shopping.
-- Match training context:
-  - Evening ride day (Mon/Tue/Thu): recovery meal with 30g+ protein for Natalie and a starch, 30 min or less.
-  - Carb-forward night (Sun/Wed): pasta, rice, potatoes or polenta (skip if DELOAD).
-  - Meal weeks run Sunday dinner to the next Sunday's breakfast (`nextSun`, breakfast only). Fresh fish only Sun–Mon (USDA: cook or freeze raw fish within 1–2 days); Tue–Sat fish must be frozen (`frozenFish`), with a planner reminder to thaw it in the fridge the night before.
-- Rice, grains and beans are always cooked from dry: give the dry amount to cook in ingredients, Notes and the grocery list (plate portions may be cooked cups "from X dry").
-- Maintain rolling 30-day meat limits, 2+ weekly fish, 2+ vegetarian dinners, cheese cap (1/day), butter/cream limits (≤2 dinners), and mild chiles for Natalie (`sideForB: true` for B).
-- If swapping the dinner that provides Wednesday's lunch, confirm whether it still makes an extra portion (`extraPortion: true`) or if Wednesday's lunch needs a quick alternative. A fish dinner never provides the leftover.
-- Scale the recipe so the portions use the whole batch (no unplanned leftovers), and label the meal with its `source` and `sourceUrl`, or "Quick Assembly".
+Offer 3 real, verified options found the way MEAL-RULES.md § Recipes describes (never invent a dish or guess quantities). Prefer what's already at home, match that day's training slot (MEAL-RULES.md § Training) and keep the week's rules. If the swapped dinner provides Wednesday's leftover lunch, say whether the new one still makes the extra portion or what Wednesday's lunch becomes.
 - Show each candidate with: name, source, total cook time, Natalie's portion (kcal, protein), and B's portion (kcal, protein).
 
 ## 3. Apply the swap
@@ -42,16 +34,9 @@ After Natalie picks:
 
 ## 4. Update Paprika
 
-1. If the recipe is new to Paprika, create it using the exact verbatim ingredients, quantities, and directions fetched from the NYT Cooking MCP or the verified `sourceUrl`—never paraphrase steps or estimate amounts from memory (category "Coach", empty rating).
-2. Write the coach block in its Notes:
-   ```
-   — Coach · week of <weekOf> · <Day> <slot> —
-   Natalie: <portion> (<kcal> kcal, <g> g protein)
-   B: <portion> (<kcal> kcal, <g> g protein)
-   Changes: Straus nonfat Greek yogurt for sauce; chile on side for B.
-   Prep: none.
-   ```
-3. Update the Paprika meal planner on that date with the new recipe, and if a snack was adjusted in Step 3 to keep daily totals on target, update that day's **Snack** entry in the Paprika meal planner with its exact portion too.
-4. Groceries: Add any new ingredients directly to **"My Grocery List"** in Paprika. **Never overwrite or clear existing cart/list items**. Check the recipe's full ingredient list (garnishes included). Every item gets an explicit `aisle`, a `quantity` and an `instruction` naming the meal and amount, as in /meal-plan.
-5. Save `meal-history.local.json` with `status: "final"`.
-6. Confirm in chat: the swapped meal, the updated daily totals, any adjusted snack, and the specific items added to My Grocery List.
+Same as /meal-plan step 5, for just the changed meals: update the meal's `recipes` (uid, title, Coach Notes lines), `plannerName`, `plannerExtras` and any reminders in the plan first, then:
+1. A new recipe: create it verbatim from its verified source (category "Coach", empty rating).
+2. `node coach/paprika-sync.mjs` lists what changed: the planner entries to add and the old ones to delete, and the Notes to write. Write them, `record` each tool output and run `notes-done` for each recipe.
+3. New ingredients go on "My Grocery List" by the Paprika rules in MEAL-RULES.md (run `node coach/grocery-list.mjs` for packages), then `record` the output.
+4. Run `compare` on that day's list_meal_history, and `compare-grocery`.
+5. Save `meal-history.local.json` with `status: "final"` and confirm in chat: the swapped meal, the updated daily totals, any adjusted snack, and the items added to My Grocery List.

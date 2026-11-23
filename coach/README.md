@@ -6,7 +6,7 @@ Files marked **private** are blocked by `.gitignore`: never commit them or paste
 ## Sunday order
 
 1. `/weekly-checkin` reviews the week, appends it to `coach/history.json`, sets `kcalAdjust` and `current.dumbbells` if they change, runs `build-plan.mjs --save`, `update-block.mjs`, and `encrypt.mjs` (reading your passcode silently from macOS Keychain), then pushes.
-3. `/meal-plan` writes the week to `coach/meal-history.local.json`, runs `check-meals.mjs` until it passes, then fills Paprika.
+3. `/meal-plan` writes the week to `coach/meal-history.local.json` by the rules in `coach/MEAL-RULES.md`, runs `check-meals.mjs` and `grocery-list.mjs` until they pass, then fills Paprika through `paprika-sync.mjs`.
 
 Mid-week: `/meal-swap` changes one meal; `/good-eggs` suggests kits (never orders).
 
@@ -19,7 +19,8 @@ Mid-week: `/meal-swap` changes one meal; `/good-eggs` suggests kits (never order
 | `node coach/update-block.mjs` | Daily targets for Natalie and B, plus the training days with a load tag | `coach/targets.local.json` (private) |
 | `node coach/stats.mjs [--in file]` | Prints the baseline, 3-week trend, workout and nutrition rates | nothing |
 | `node coach/check-meals.mjs [--week YYYY-MM-DD] [--strict]` | Checks Natalie's days and the week's food rules, including sources (every meal a sourced recipe or "Quick Assembly") and no fish leftovers. ✗ = broken rule (exits 1); ! = warning; `--strict` fails on warnings too | nothing |
-| `node coach/grocery-list.mjs [--week YYYY-MM-DD] [--json]` | Builds the grocery list from the plan: every ingredient by aisle, added up where the units match, with the meals it's for. Skips leftovers and `onHand` items (listed separately) and includes `prep` | nothing |
+| `node coach/grocery-list.mjs [--week YYYY-MM-DD] [--json]` | Builds the grocery list from the plan: every ingredient by aisle, added up where the units match, with the meals it's for. Skips leftovers and `onHand` items (listed separately) and includes `prep`. Checks packages: every use of a `buy` item against bought + `stock` + last week's `carryOver` (✗ short, exits 1; ! lots left over) | nothing |
+| `node coach/paprika-sync.mjs [--week YYYY-MM-DD] [--json]` | What Paprika should hold (planner entries, Coach Notes, reminders) and what's still to write; ✗ when the text doesn't match the plan (kcal, protein, the fish) or a freeze/thaw/Instant Pot reminder is missing. `record <file>` saves UIDs from Paprika tool output, `notes-done <uid>` marks Notes written, `compare <file>` / `compare-grocery <file>` check Paprika's actual planner and grocery list | `plan.paprika` in meal-history (private) |
 | `node coach/encrypt.mjs [--save-keychain] [--ask] [--new-salt] [--in file]` | Copies the goal weight from `profile.json` into `history.json` (real history only), then encrypts using macOS Keychain (keeping the existing salt so your iPhone stays unlocked) | `history.enc` (and `history.json` when the goal changed) |
 
 ### build-plan.mjs flags
@@ -169,7 +170,7 @@ Tempo levels: L1 1 × 15 min (35 min) · L2 2 × 10 (35) · L3 2 × 12 (40) · L
 
 Written by `/meal-plan`, `/meal-swap` and `/good-eggs`; read by `check-meals.mjs`.
 
-**Plan:** meal weeks run Sunday (shopping day, dinner only) to the next Sunday's breakfast (`nextSun`, breakfast only); plans saved before 2026-11-22 started on a Monday and still check. `prep` (optional: Sunday prep like cooking beans or grains, `[{ recipe, ingredients }]`, so its extras get bought), `weekOf` (the Sunday it starts; older plans: the Monday), `carryOver` (optional: food bought but not used, `[{ name, amount, note }]`; the next /meal-plan uses it first), `status` (`"draft"` or `"final"`; only final plans count toward the rolling 30-day limits), `newRecipeTarget` (4, or 2 once Paprika has about 20 recipes at 4★+), `plannedWith` { kcal, proteinG, status }, `days` (all 7, plus `nextSun` on Sunday-start plans). Fresh fish only Sun–Mon (bought on shopping day; USDA: cook or freeze raw fish within 1–2 days); Tue–Sat fish is frozen and needs `frozenFish`, or check-meals fails.
+**Plan:** meal weeks run Sunday (shopping day, dinner only) to the next Sunday's breakfast (`nextSun`, breakfast only); plans saved before 2026-11-22 started on a Monday and still check. `prep` (optional: Sunday prep like cooking beans or grains, `[{ recipe, ingredients }]`, so its extras get bought), `weekOf` (the Sunday it starts; older plans: the Monday), `carryOver` (optional: food bought but not used, `[{ name, amount, note }]`; the next /meal-plan uses it first), `status` (`"draft"` or `"final"`; only final plans count toward the rolling 30-day limits), `newRecipeTarget` (4, or 2 once Paprika has about 20 recipes at 4★+), `plannedWith` { kcal, proteinG, status }, `days` (all 7, plus `nextSun` on Sunday-start plans), `reminders` (`[{ day, type, text }]`: freeze, thaw, Instant Pot, prep and holiday planner entries), `buy` (`[{ name, amount }]`: how package items are bought, e.g. "1 dozen", "2 (32-oz) tubs"), `stock` (`[{ name, amount, note }]`: food already at home; "enough" when confirmed), `groceryAs` (`{ "planned name": "name on the list" }` when something was bought as a different item), `paprika` (written by paprika-sync.mjs: `planner` key → uid, `names`, `notes` recipe uid → hash, `grocery` name → uid; don't edit by hand). The rules these fields serve are in coach/MEAL-RULES.md.
 
 **Day:** `day` (sun–sat, or `nextSun` for the following Sunday), `office` (true or false on every weekday), `nightOut`, `holiday` (its name, or null), `swim`, `mealsOut` (away all day; nothing else planned), `dinnerOnly` (the first Sunday: only dinner and an evening snack, not totalled), `breakfastOnly` (`nextSun`: only breakfast, not totalled), `unplanned` (another plan covers this day), `meals`.
 
@@ -193,6 +194,9 @@ Written by `/meal-plan`, `/meal-swap` and `/good-eggs`; read by `check-meals.mjs
 | `extraPortion` | dinner | true on the one dinner that makes a leftover lunch; never a fish dinner |
 | `tunaServings` | optional | overrides the count (tuna 1, albacore 2) |
 | `note` | `office` | the guide for office meals |
+| `recipes` | any meal with a Paprika recipe | `[{ uid, title, notes }]`: the Paprika recipe uid and exact title, and the Coach Notes lines (paprika-sync adds the header). A dinner can link two (sole + potatoes) |
+| `plannerName` | any meal without a Paprika recipe | the exact planner text (Quick Assembly with every amount; office entries) |
+| `plannerExtras` | optional | extra freeform planner entries in the same slot ("Side: ...", "With: ...") |
 
 ```json
 { "plans": [{
