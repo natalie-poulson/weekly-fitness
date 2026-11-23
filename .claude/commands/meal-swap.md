@@ -20,12 +20,13 @@ Follow CLAUDE.md. Everything read here is private: never copy kcal, weights or t
 
 ## 2. Offer 3 candidates
 
-Offer 3 real, verified options from Paprika (4–5★ or untested), NYT Cooking MCP, or a fetched web URL from Natalie's approved authors (Ina Garten, Alison Roman, Smitten Kitchen, Claire Saffitz)—never invent a dish or guess recipe quantities from memory:
+Offer 3 real, verified options from Paprika (4–5★ or untested), NYT Cooking MCP, or a fetched web URL from Natalie's approved authors (Ina Garten, Alison Roman, Smitten Kitchen, Claire Saffitz, Courtney Storer at courtneystorer.substack.com, free posts only)—never invent a dish or guess recipe quantities from memory:
 - Prioritize recipes using what's already on hand or in the pantry to minimize extra shopping.
 - Match training context:
   - Evening ride day (Mon/Tue/Thu): recovery meal with 30g+ protein for Natalie and a starch, 30 min or less.
   - Carb-forward night (Sun/Wed): pasta, rice, potatoes or polenta (skip if DELOAD).
-  - Thu–Sun fish must be frozen (`frozenFish: true`).
+  - Meal weeks run Sunday dinner to the next Sunday's breakfast (`nextSun`, breakfast only). Fresh fish only Sun–Mon (USDA: cook or freeze raw fish within 1–2 days); Tue–Sat fish must be frozen (`frozenFish`), with a planner reminder to thaw it in the fridge the night before.
+- Rice, grains and beans are always cooked from dry: give the dry amount to cook in ingredients, Notes and the grocery list (plate portions may be cooked cups "from X dry").
 - Maintain rolling 30-day meat limits, 2+ weekly fish, 2+ vegetarian dinners, cheese cap (1/day), butter/cream limits (≤2 dinners), and mild chiles for Natalie (`sideForB: true` for B).
 - If swapping the dinner that provides Wednesday's lunch, confirm whether it still makes an extra portion (`extraPortion: true`) or if Wednesday's lunch needs a quick alternative. A fish dinner never provides the leftover.
 - Scale the recipe so the portions use the whole batch (no unplanned leftovers), and label the meal with its `source` and `sourceUrl`, or "Quick Assembly".

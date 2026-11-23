@@ -169,9 +169,9 @@ Tempo levels: L1 1 × 15 min (35 min) · L2 2 × 10 (35) · L3 2 × 12 (40) · L
 
 Written by `/meal-plan`, `/meal-swap` and `/good-eggs`; read by `check-meals.mjs`.
 
-**Plan:** `prep` (optional: Sunday prep like cooking beans or grains, `[{ recipe, ingredients }]`, so its extras get bought), `weekOf` (the Monday), `status` (`"draft"` or `"final"`; only final plans count toward the rolling 30-day limits), `newRecipeTarget` (4, or 2 once Paprika has about 20 recipes at 4★+), `plannedWith` { kcal, proteinG, status }, `days` (all 7).
+**Plan:** meal weeks run Sunday (shopping day, dinner only) to the next Sunday's breakfast (`nextSun`, breakfast only); plans saved before 2026-11-22 started on a Monday and still check. `prep` (optional: Sunday prep like cooking beans or grains, `[{ recipe, ingredients }]`, so its extras get bought), `weekOf` (the Sunday it starts; older plans: the Monday), `carryOver` (optional: food bought but not used, `[{ name, amount, note }]`; the next /meal-plan uses it first), `status` (`"draft"` or `"final"`; only final plans count toward the rolling 30-day limits), `newRecipeTarget` (4, or 2 once Paprika has about 20 recipes at 4★+), `plannedWith` { kcal, proteinG, status }, `days` (all 7, plus `nextSun` on Sunday-start plans). Fresh fish only Sun–Mon (bought on shopping day; USDA: cook or freeze raw fish within 1–2 days); Tue–Sat fish is frozen and needs `frozenFish`, or check-meals fails.
 
-**Day:** `day` (mon–sun), `office` (true or false on every weekday), `nightOut`, `holiday` (its name, or null), `swim`, `mealsOut` (away all day; nothing else planned), `meals`.
+**Day:** `day` (sun–sat, or `nextSun` for the following Sunday), `office` (true or false on every weekday), `nightOut`, `holiday` (its name, or null), `swim`, `mealsOut` (away all day; nothing else planned), `dinnerOnly` (the first Sunday: only dinner and an evening snack, not totalled), `breakfastOnly` (`nextSun`: only breakfast, not totalled), `unplanned` (another plan covers this day), `meals`.
 
 **Meal:**
 
@@ -196,7 +196,7 @@ Written by `/meal-plan`, `/meal-swap` and `/good-eggs`; read by `check-meals.mjs
 
 ```json
 { "plans": [{
-  "weekOf": "2026-11-23", "status": "draft", "newRecipeTarget": 4,
+  "weekOf": "2026-11-29", "status": "draft", "newRecipeTarget": 4,
   "plannedWith": { "kcal": 0, "proteinG": 0, "status": "HOLD" },
   "days": [{
     "day": "mon", "office": true, "nightOut": false, "holiday": null, "swim": false, "mealsOut": false,

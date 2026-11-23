@@ -14,7 +14,7 @@ People: **Natalie** (the training plan and every meal check are hers) and **B** 
 ## Sunday routine (one sitting, Sunday morning)
 
 1. `/weekly-checkin`: weigh-in, Garmin review, decision, targets, plan.json, encrypt, push.
-2. Straight after: `/meal-plan` for the week, using the targets just set. There is no separate evening check-in.
+2. Straight after: `/meal-plan` for the meal week, using the targets just set. Meal weeks run Sunday dinner to the next Sunday's breakfast (shop Sunday, tonight's dinner is the first meal; next Sunday's breakfast is eaten while planning the next week); the workout week in plan.json still runs Monday to Sunday. There is no separate evening check-in.
 
 ## How to change things
 
@@ -24,7 +24,7 @@ People: **Natalie** (the training plan and every meal check are hers) and **B** 
 - Goal weight lives only in `coach/profile.json` (`goalWeightLb`). encrypt.mjs copies it into history for the Progress tab.
 - Targets come from `node coach/update-block.mjs`, which writes `coach/targets.local.json`. It uses the 3-week weight trend from history.json and tags each day hard, moderate, easy or rest for the meal plan. Re-run it after any profile.json change or new weigh-in.
 - Dumbbells: keep `current.dumbbells` in training.json as `{ lb, topStreak, stalls }` per move (5 lb steps, 5–50 lb, 3 × 8–15 reps). Update it from the two finisher questions at the check-in, following RULES.md.
-- Recipe sourcing (strict anti-hallucination): Never invent, generate, or reconstruct recipes, ingredient quantities, or cooking steps from memory. Every recipe must come verbatim from the Paprika MCP, the NYT Cooking MCP, or a real recipe page fetched via web search during the session with a verified `sourceUrl` (from NYT Cooking, Ina Garten / Barefoot Contessa, Alison Roman, Smitten Kitchen, or Claire Saffitz). If a cookbook recipe's full ingredients and directions cannot be verified verbatim online or in Paprika, pick another recipe—never guess ratios.
+- Recipe sourcing (strict anti-hallucination): Never invent, generate, or reconstruct recipes, ingredient quantities, or cooking steps from memory. Every recipe must come verbatim from the Paprika MCP, the NYT Cooking MCP, or a real recipe page fetched via web search during the session with a verified `sourceUrl` (from NYT Cooking, Ina Garten / Barefoot Contessa, Alison Roman, Smitten Kitchen, Claire Saffitz, or Courtney Storer (courtneystorer.substack.com; free posts only, skip paywalled recipes)). If a cookbook recipe's full ingredients and directions cannot be verified verbatim online or in Paprika, pick another recipe—never guess ratios.
 - Meal plans: run `node coach/check-meals.mjs` before showing any plan. It checks Natalie only. ✗ is a broken rule (exit 1): fix the plan first. ! is a warning: mention it, don't block.
 - History format: see coach/README.md. Append one entry per week; never rewrite past weeks unless Natalie asks.
 

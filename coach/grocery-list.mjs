@@ -4,10 +4,10 @@
 // amount when all its amounts share a unit. /meal-plan copies this into Paprika (aisle, quantity, meals),
 // then checks it against each recipe's full ingredient list. Writes nothing. Private output: don't commit it.
 // Ingredients with `onHand: true` (already owned, or the same item bought for another meal) are listed
-// separately and not added up. plan.prep holds Sunday prep (beans, grains) so its extras are bought too.
+// separately and not added up. plan.prep holds shopping-day prep (beans, grains) so its extras are bought too.
 //
 //   node coach/grocery-list.mjs                     # latest plan
-//   node coach/grocery-list.mjs --week 2026-11-23   # the plan starting that Monday
+//   node coach/grocery-list.mjs --week 2026-11-29   # the plan starting that Sunday
 //   node coach/grocery-list.mjs --json              # machine-readable
 
 import { readFileSync, existsSync } from 'node:fs';
@@ -25,8 +25,12 @@ const plans = Array.isArray(MH.plans) ? MH.plans : [];
 const plan = week ? plans.find(p => p.weekOf === week) : plans[plans.length - 1];
 if (!plan) { console.error(`✗ No plan${week ? ` for week ${week}` : ''}.`); process.exit(1); }
 
-const KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
-const DAY = { mon: 'Mon', tue: 'Tue', wed: 'Wed', thu: 'Thu', fri: 'Fri', sat: 'Sat', sun: 'Sun' };
+// Plans run Sunday dinner to the next Sunday's breakfast (`nextSun`); older ones Monday to Sunday. The day order follows weekOf's weekday.
+const DOW = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+const [y0, m0, d0] = plan.weekOf.split('-').map(Number);
+const start = new Date(y0, m0 - 1, d0, 12).getDay();
+const KEYS = [...DOW.map((_, i) => DOW[(start + i) % 7]), ...(start === 0 ? ['nextSun'] : [])];
+const DAY = { mon: 'Mon', tue: 'Tue', wed: 'Wed', thu: 'Thu', fri: 'Fri', sat: 'Sat', sun: 'Sun', nextSun: 'next Sun' };
 const SLOT = { breakfast: 'breakfast', lunch: 'lunch', dinner: 'dinner', snack: 'snack', preRide: 'pre-ride' };
 
 // Aisles in Natalie's Paprika. First match wins, so specific words come before general ones.
@@ -88,7 +92,7 @@ const missingAmount = [];
 const sources = [...(plan.prep || []).map(m => ({ k: 'prep', m: { slot: 'prep', ...m } }))];
 for (const k of KEYS) {
   const d = (plan.days || []).find(x => x.day === k);
-  if (!d || d.mealsOut) continue;
+  if (!d || d.mealsOut || d.unplanned) continue;
   for (const m of d.meals || []) sources.push({ k, m });
 }
 DAY.prep = 'Sun'; SLOT.prep = 'prep';

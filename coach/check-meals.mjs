@@ -6,7 +6,7 @@
 // ✗ = a rule is broken, so it exits 1 and Claude fixes the plan first. ! = worth a look; doesn't fail.
 //
 //   node coach/check-meals.mjs                     # latest plan
-//   node coach/check-meals.mjs --week 2026-11-23   # the plan starting that Monday
+//   node coach/check-meals.mjs --week 2026-11-29   # the plan starting that Sunday
 //   node coach/check-meals.mjs --strict            # warnings fail too
 //
 // What /meal-plan writes for each meal (full format in coach/README.md):
@@ -55,7 +55,7 @@ if (!t || t.kcal == null) fail('No kcal target for Natalie yet. Fill in coach/pr
 const args = process.argv.slice(2);
 const wi = args.indexOf('--week');
 const weekArg = wi >= 0 ? args[wi + 1] : null;
-if (wi >= 0 && !/^\d{4}-\d{2}-\d{2}$/.test(weekArg || '')) fail('--week needs a Monday, like 2026-11-23.');
+if (wi >= 0 && !/^\d{4}-\d{2}-\d{2}$/.test(weekArg || '')) fail("--week needs the plan's start date, like 2026-11-29.");
 const strict = args.includes('--strict');
 
 const plans = Array.isArray(MH.plans) ? MH.plans : [];
@@ -64,15 +64,27 @@ const plan = weekArg ? plans.find(p => p.weekOf === weekArg) : plans[plans.lengt
 if (!plan) fail(`No plan for week ${weekArg}.`);
 
 // ---- Dates ----
-const KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
-const isWeekend = k => k === 'sat' || k === 'sun';
+// Plans run Sunday dinner to the next Sunday's breakfast (shop Sunday, cook that night; next Sunday's
+// breakfast is eaten while planning the next week, so it's planned here as `nextSun`, breakfastOnly).
+// Older plans started on a Monday and have no nextSun; the day order and dates come from the weekday of weekOf.
+const DOW = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+const isWeekend = k => k === 'sat' || k === 'sun' || k === 'nextSun';
 const pad = n => String(n).padStart(2, '0');
-function dateOf(weekOf, day) { const [y, m, d] = weekOf.split('-').map(Number); return new Date(y, m - 1, d + KEYS.indexOf(day), 12); }
+const startOf = w => { const [y, m, d] = w.split('-').map(Number); return new Date(y, m - 1, d, 12); };
+const keysFor = w => { const s = startOf(w).getDay(), k = DOW.map((_, i) => DOW[(s + i) % 7]); return s === 0 ? [...k, 'nextSun'] : k; };
+const DAY_KEYS = [...DOW, 'nextSun'];
+function dateOf(weekOf, day) { const dt = startOf(weekOf); dt.setDate(dt.getDate() + keysFor(weekOf).indexOf(day)); return dt; }
 const iso = dt => `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`;
 const dayNum = dt => Math.round(Date.UTC(dt.getFullYear(), dt.getMonth(), dt.getDate()) / 86400000);
 const md = dt => `${dt.getMonth() + 1}/${dt.getDate()}`;
-const validWeek = w => /^\d{4}-\d{2}-\d{2}$/.test(w || '') && dateOf(w, 'mon').getDay() === 1;
-if (!validWeek(plan.weekOf)) fail(`The plan's weekOf (${plan.weekOf}) must be the Monday it starts, like 2026-11-23.`);
+const validWeek = w => /^\d{4}-\d{2}-\d{2}$/.test(w || '') && [0, 1].includes(startOf(w).getDay());
+if (!validWeek(plan.weekOf)) fail(`The plan's weekOf (${plan.weekOf}) must be the Sunday it starts, like 2026-11-29.`);
+const KEYS = keysFor(plan.weekOf);   // this plan's days in order
+// Fresh fish is bought on shopping day (the Sunday the plan starts, or before it) and cooked by the next day
+// (USDA FSIS: cook or freeze raw fish within 1-2 days; shopping is Sunday morning, so Tue dinner would be ~2.5 days): Sun-Mon.
+// Later fish is frozen on shopping day and thawed in the fridge the night before (thawed fish keeps 1-2 more days).
+const shopN = dayNum(startOf(plan.weekOf)) - startOf(plan.weekOf).getDay();
+const FRESH_FISH_DAYS = KEYS.filter(k => dayNum(dateOf(plan.weekOf, k)) - shopN <= 1);
 
 // ---- Helpers ----
 const low = s => String(s ?? '').toLowerCase().trim();
@@ -152,6 +164,10 @@ const VEG = R.vegetables || {};
 const VEG_MIN = VEG.vegServingsPerDayMin ?? 3, VF_MIN = VEG.vegAndFruitServingsPerDayMin ?? 5;
 
 // ---- Rules for every meal ----
+// Rice, grains and beans are always cooked from dry, so every amount names the dry quantity to cook (canned beans excepted).
+const DRY_STAPLE = /\b(rice|beans?|lentils?|chickpeas?|farro|quinoa|barley|bulgur|polenta|couscous|freekeh|millet)\b/;
+const NOT_DRY_STAPLE = /vinegar|wine|green beans?|string beans?|wax beans?|edamame|canned|noodles?|paper|flour|cakes?|crisp|sprouts?|sauce|paste|hummus|vanilla|coffee|cacao|jelly/;
+
 function checkFood(m, where) {
   const label = `${where} ${m.slot}${m.recipe ? ` (${m.recipe})` : ''}`;
   const all = foodText(m);
@@ -166,6 +182,7 @@ function checkFood(m, where) {
     if (SOY.test(n) && !LOW_NA.test(n)) warn(label, `"${i.name}": use low-sodium`);
     if (NUTS.test(n) && !low(i.amount)) bad(label, `"${i.name}" needs a measured amount (1 oz nuts or seeds, 1 tbsp nut butter or tahini)`);
     if (/sausage/.test(n) && !/nitrate[- ]free|uncured/.test(n)) warn(label, `"${i.name}": buy nitrate-free`);
+    if (DRY_STAPLE.test(n) && !NOT_DRY_STAPLE.test(n) && !/\bcans?\b/.test(low(i.amount)) && !/\bdry\b|\bdried\b/.test(low(i.amount))) bad(label, `"${i.name}": rice, grains and beans are cooked from dry; give the dry amount to cook (e.g. "2/3 cup dry" or "1 1/2 cups cooked (from 1/2 cup dry)")`);
   }
   if (protOf(m).includes('pork')) bad(label, 'no pork other than pork sausage');
   for (const p of protOf(m)) if (!KNOWN.has(p)) warn(label, `protein "${p}" isn't a known tag, so the protein limits can't count it`);
@@ -191,16 +208,22 @@ function checkFood(m, where) {
 // ---- Day by day ----
 console.log(`Meal plan · week of ${plan.weekOf} (${plan.status || 'draft'}) · ${TG.status || 'HOLD'} week · tolerance ±${Math.round(TOL * 100)}%`);
 const byDay = Object.fromEntries(list(plan.days).map(d => [d.day, d]));
-for (const d of list(plan.days)) if (!KEYS.includes(d.day)) bad(`day "${d.day}"`, 'use mon, tue, wed, thu, fri, sat or sun');
+for (const d of list(plan.days)) if (!DAY_KEYS.includes(d.day)) bad(`day "${d.day}"`, 'use sun, mon, tue, wed, thu, fri, sat or nextSun');
 const SLOTS = ['breakfast', 'lunch', 'dinner', 'snack', 'preRide', 'office', 'out'];
 const rows = [];
 let longNights = 0;
 
 for (const k of KEYS) {
   const d = byDay[k], dt = dateOf(plan.weekOf, k), where = `${k} ${md(dt)}`;
-  if (!d) { bad(where, 'missing from the plan'); continue; }
+  if (!d) { bad(where, 'missing from the plan (add it with unplanned: true if another plan covers it)'); continue; }
   if (d.mealsOut) { console.log(`  ${where}: away all day, not planned`); continue; }
+  if (d.unplanned) { console.log(`  ${where}: not planned (the next plan covers it)`); continue; }
   const meals = list(d.meals);
+  if (k === 'nextSun') {
+    if (!d.breakfastOnly) bad(where, 'next Sunday is breakfastOnly: true (breakfast is eaten while planning; the next plan starts with dinner)');
+    for (const m of meals) if (!['breakfast', 'snack'].includes(m.slot)) bad(where, `only breakfast on next Sunday, not ${m.slot} (the next plan covers the rest)`);
+    if (!meals.some(m => m.slot === 'breakfast')) bad(where, 'plan next Sunday\'s breakfast');
+  }
   for (const m of meals) {
     if (!SLOTS.includes(m.slot)) bad(where, `unknown slot "${m.slot}" (use ${SLOTS.join(', ')})`);
     rows.push({ k, dt, m });
@@ -221,7 +244,7 @@ for (const k of KEYS) {
   // Dinner, office and night out
   const dinners = slot('dinner');
   if (away && dinners.length) bad(where, `${d.holiday ? 'holiday' : 'night out'}: don't plan dinner`);
-  if (!away && dinners.length !== 1) bad(where, dinners.length ? `${dinners.length} dinners planned` : 'no dinner planned');
+  if (!away && !d.breakfastOnly && dinners.length !== 1) bad(where, dinners.length ? `${dinners.length} dinners planned` : 'no dinner planned');
   if (office) {
     if (slot('breakfast').length || slot('lunch').length) bad(where, 'office day: the office provides breakfast and lunch, so plan only dinner and snacks');
     const o = slot('office')[0];
@@ -274,7 +297,7 @@ for (const k of KEYS) {
     }
     if (CARB_NIGHTS.includes(k) && !(hasTag(m, 'carbForward') || CARB_FORWARD.test(text))) bad(where, `carb-forward dinner (rice, pasta, potatoes or polenta) the night before ${k === 'sun' ? 'Monday HIIT' : 'Thursday tempo'}`);
     if (d.swim && !(hasTag(m, 'sheetPan') || hasTag(m, 'prepAhead') || /sheet/.test(low(m.method)))) warn(where, 'swim night: dinner at about 7:45 should be sheet-pan or prepped ahead');
-    if (isFishMeal(m) && ['thu', 'fri', 'sat', 'sun'].includes(k) && !hasTag(m, 'frozenFish')) warn(where, 'fresh fish is planned early in the week; move it or tag frozenFish');
+    if (isFishMeal(m) && !FRESH_FISH_DAYS.includes(k) && !hasTag(m, 'frozenFish')) bad(where, `fresh fish only on ${FRESH_FISH_DAYS.join(', ')} (USDA: cook or freeze raw fish within 1-2 days); freeze it on shopping day, thaw it in the fridge the night before, and tag frozenFish`);
     if (v && n0(v.vegServings) < DINNER_VEG_MIN) bad(where, `dinner has ${n0(v.vegServings)} vegetable servings; make it about half the plate (${DINNER_VEG_MIN}+)`);
     if (hasTag(m, 'goodEggs') && v && n0(v.sodiumMg) >= 900) warn(where, `Good Eggs dinner has ${fmt(v.sodiumMg)} mg sodium; target 800 mg or less (900+ flagged)`);
   }
@@ -308,6 +331,8 @@ for (const k of KEYS) {
   const partial = office || !!d.nightOut;   // office and restaurant meals aren't itemised
   let line = '';
   if (d.holiday) line = `${fmt(S.kcal)} kcal planned (holiday, not totalled)`;
+  else if (d.dinnerOnly) line = `${fmt(S.kcal)} kcal planned (dinner only; the rest of the day was already eaten, not totalled)`;
+  else if (d.breakfastOnly) line = `${fmt(S.kcal)} kcal planned (breakfast only; the next plan covers the rest of the day, not totalled)`;
   else {
     const kOk = Math.abs(S.kcal - t.kcal) <= t.kcal * TOL;
     const pOk = t.proteinG == null || S.protein >= t.proteinG * (1 - TOL);
@@ -315,7 +340,7 @@ for (const k of KEYS) {
     if (!pOk) bad(where, `${fmt(S.protein)} g protein; target ${t.proteinG} g`);
     line = `${fmt(S.kcal)}/${fmt(t.kcal)} kcal ${mark(kOk)}, ${fmt(S.protein)}/${t.proteinG ?? '—'} g protein ${mark(pOk)}`;
   }
-  if (!partial && !d.holiday) {
+  if (!partial && !d.holiday && !d.dinnerOnly && !d.breakfastOnly) {
     if (t.fiberG) { const ok = S.fiber >= t.fiberG; if (!ok) bad(where, `fiber ${fmt(S.fiber)} g; at least ${t.fiberG} g`); line += `, fiber ${fmt(S.fiber)}/${t.fiberG} ${mark(ok)}`; }
     if (S.veg < VEG_MIN) bad(where, `${S.veg} vegetable servings; at least ${VEG_MIN}`);
     if (S.veg + S.fruit < VF_MIN) bad(where, `${S.veg + S.fruit} vegetable and fruit servings; at least ${VF_MIN}`);
@@ -416,8 +441,10 @@ const wedL = planned.find(r => r.k === 'wed' && r.m.slot === 'lunch'), friL = pl
 if (wedL && friL && (!wedL.m.leftoverOf || friL.m.leftoverOf)) warn('week', 'Pilates days: the leftover lunch goes on Wed and the quick lunch on Fri');
 
 // Repeats: only 4-5★ recipes come back within 2 weeks
-const prevWeek = (() => { const dt = dateOf(plan.weekOf, 'mon'); dt.setDate(dt.getDate() - 7); return iso(dt); })();
-const prev = plans.find(p => p !== plan && p.weekOf === prevWeek);
+// (the plan just before this one: started 1-8 days earlier, so a Mon-start week followed by a Sun-start one still counts)
+const startN = dayNum(startOf(plan.weekOf));
+const prev = plans.filter(p => p !== plan && validWeek(p.weekOf) && startN - dayNum(startOf(p.weekOf)) >= 1 && startN - dayNum(startOf(p.weekOf)) <= 8)
+  .sort((a, b) => b.weekOf.localeCompare(a.weekOf))[0];
 if (prev) {
   const last = new Set(list(prev.days).flatMap(d => list(d.meals)).filter(m => m.slot === 'dinner').map(nameKey));
   for (const r of dinnersW) if (last.has(nameKey(r.m)) && !(isNum(r.m.rating) && r.m.rating >= 4)) bad(r.k, `"${r.m.recipe}" was on last week's plan; only 4-5★ recipes repeat within 2 weeks`);
@@ -437,7 +464,7 @@ const byWeek = new Map();
 for (const p of plans) if (p !== plan && p.status === 'final' && validWeek(p.weekOf)) byWeek.set(p.weekOf, p);
 byWeek.set(plan.weekOf, plan);   // this plan replaces any saved version of the same week
 const dated = [...byWeek.values()].flatMap(p => list(p.days)
-  .filter(d => KEYS.includes(d.day) && !d.mealsOut)
+  .filter(d => DAY_KEYS.includes(d.day) && !d.mealsOut && !d.unplanned)
   .flatMap(d => { const n = dayNum(dateOf(p.weekOf, d.day)); return list(d.meals).filter(m => !m.leftoverOf && !['office', 'out'].includes(m.slot)).map(m => ({ n, p: protOf(m) })); }));
 for (const [label, test, max] of LIMITS) {
   let worst = 0, worstDay = null;

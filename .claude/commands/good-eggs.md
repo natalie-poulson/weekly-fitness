@@ -44,6 +44,6 @@ Show 3 candidate kits/meals with:
 ## 4. If selected
 
 1. **For a single swap**: Update `coach/meal-history.local.json`, run `node coach/check-meals.mjs`, update the Paprika meal planner for that date, and write portion notes in Paprika Notes.
-2. **For a full week**: Build the 7-day plan in `coach/meal-history.local.json` with `tags: ["goodEggs"]`, verify with `check-meals.mjs`, and populate all planned slots in the Paprika meal planner (weekday smoothies/breakfasts, lunches, `[Good Eggs]` dinners, pre-ride snacks, and daily snacks with exact portions).
+2. **For a full week**: Build the plan (Sunday dinner to next Sunday's breakfast) in `coach/meal-history.local.json` with `tags: ["goodEggs"]`, verify with `check-meals.mjs`, and populate all planned slots in the Paprika meal planner (weekday smoothies/breakfasts, lunches, `[Good Eggs]` dinners, pre-ride snacks, and daily snacks with exact portions).
 3. **Paprika labeling**: Every Good Eggs meal added to the Paprika meal planner MUST be clearly labeled with the "[Good Eggs]" prefix (e.g. "[Good Eggs] Chicken Tinga Tacos") so it is immediately recognizable on the calendar.
 4. **Groceries**: Do **not** add Good Eggs items to the Paprika grocery list. Only add any pantry staples (e.g. olive oil, salad greens) that Natalie needs to buy separately.
