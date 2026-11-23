@@ -14,6 +14,8 @@
 //   node coach/paprika-sync.mjs notes-done <recipeUid> [...]   # mark Coach Notes as written
 //   node coach/paprika-sync.mjs compare <file>     # <file> = list_meal_history output for the plan's dates
 //   node coach/paprika-sync.mjs compare-grocery <file>  # <file> = read_grocery_list output
+//   node coach/paprika-sync.mjs keep <date> <type> "<name>"  # Natalie's own planner entry: never flag it
+// compare also accepts entries that a neighbouring plan recorded on a shared date (last week's nextSun breakfast).
 //
 // Plan fields it reads (full format in coach/README.md):
 //   meal.recipes      [{ uid, title, notes: [lines] }]  Paprika recipes linked in the planner, each with its Coach Notes body
@@ -42,6 +44,7 @@ const plan = week ? plans.find(p => p.weekOf === week) : plans[plans.length - 1]
 if (!plan) fail(`No plan${week ? ` for week ${week}` : ''}.`);
 plan.paprika = plan.paprika || {};
 for (const k of ['planner', 'names', 'notes', 'grocery']) plan.paprika[k] = plan.paprika[k] || {};
+plan.paprika.keep = plan.paprika.keep || [];   // Natalie's own planner entries: [{ date, type, name }], never flagged
 const save = () => writeFileSync(P, JSON.stringify(MH, null, 1) + '\n');
 
 // ---- Dates (same rules as check-meals: Sunday dinner to next Sunday's breakfast) ----
@@ -206,12 +209,25 @@ if (cmd === 'compare') {
     const i = r.indexOf(p.name);
     if (i < 0) missing.push(p); else rests.set(k, r.slice(0, i) + ' ' + r.slice(i + p.name.length));
   }
+  // Not extras: entries recorded by a neighbouring plan on a shared date (this plan's first Sunday holds last
+  // week's nextSun breakfast), and Natalie's own entries kept with `keep`.
+  const idx = plans.indexOf(plan);
+  const known = [...plan.paprika.keep];
+  for (const q of [plans[idx - 1], plans[idx + 1]]) {
+    if (!q || !q.paprika || !q.paprika.planner) continue;
+    for (const [key, uid] of Object.entries(q.paprika.planner)) { const [date, type] = key.split('|'); const name = (q.paprika.names || {})[uid]; if (name) known.push({ date, type, name, from: q.weekOf }); }
+    for (const x of q.paprika.keep || []) known.push(x);
+  }
+  for (const x of known.sort((a, b) => b.name.length - a.name.length)) {
+    const k = `${x.date}|${x.type}`, r = rests.get(k); if (!r) continue;
+    const i = r.indexOf(x.name); if (i >= 0) rests.set(k, r.slice(0, i) + ' ' + r.slice(i + x.name.length));
+  }
   for (const [k, r] of rests) { const left = r.replace(/\*\(freeform\)\*/g, '').replace(/[,\s]+/g, ' ').trim(); if (left) extra.push(`${k.replace('|', ' ')}: ${left}`); }
   const dates = [...new Set(planner.map(p => p.date))].sort();
   console.log(`Paprika planner vs plan · ${dates[0]} to ${dates[dates.length - 1]}`);
   if (!missing.length && !extra.length) { console.log('✓ The planner matches the plan exactly.'); process.exit(0); }
   if (missing.length) { console.log(`✗ ${missing.length} missing from Paprika (add them):`); for (const p of missing) console.log(`  + ${p.date} ${p.type}: ${p.name}${p.recipeUid ? ` (recipe ${p.recipeUid})` : ''}`); }
-  if (extra.length) { console.log(`✗ In Paprika but not in the plan (delete them, or add them to the plan if Natalie added them):`); for (const x of extra) console.log(`  - ${x}`); }
+  if (extra.length) { console.log(`✗ In Paprika but not in the plan. Delete stale coach entries; for ones Natalie added herself, run: keep <date> <type> "<name>"`); for (const x of extra) console.log(`  - ${x}`); }
   process.exit(1);
 }
 
@@ -239,7 +255,14 @@ if (cmd === 'compare-grocery') {
   process.exit(missing.length ? 1 : 0);
 }
 
-if (cmd && cmd !== '--json') fail(`Unknown command "${cmd}". Use record, notes-done, compare or compare-grocery.`);
+if (cmd === 'keep') {
+  const [date, type, ...rest] = args.slice(1), name = rest.join(' ').trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date || '') || !type || !name) fail('Use: keep <YYYY-MM-DD> <Breakfast|Lunch|Dinner|Snacks> "<name exactly as in Paprika>"');
+  if (!plan.paprika.keep.some(x => x.date === date && x.type === type && x.name === name)) plan.paprika.keep.push({ date, type, name });
+  save(); console.log(`Keeping "${name}" (${date} ${type}) as Natalie's own entry; compare won't flag it.`); process.exit(0);
+}
+
+if (cmd && cmd !== '--json') fail(`Unknown command "${cmd}". Use record, notes-done, keep, compare or compare-grocery.`);
 
 // ---- Status ----
 const pendingPlanner = planner.filter(p => !plan.paprika.planner[p.key]);
